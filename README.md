@@ -140,20 +140,32 @@ The output should look something like (You can ignore the warning):
 ## Galery
 
 ### 3D renderings
+
 ![1d](assets/images/untitled copy 2.png)
+
 ![1d](assets/images/spong.png)
+
 ![1d](assets/images/spong-melt.png)
+
 ![1d](assets/images/orange-blob.png)
+
 ![1d](assets/images/megabiiiig.png)
+
 ![1d](assets/images/img000001.png)
 
 
 ### GIFs
+
 **1D Simulation:**
+
 ![1d](assets/gifs/1d-colorspeed-pbc.gif)
+
 **2D Simulation:**
+
 ![2d](assets/gifs/2d-smalvolfrac.gif)
+
 **3D Simulation with Blender's Cycles rendering engine:**
+
 ![3d-cycles](assets/gifs/cycles.gif)
 
 

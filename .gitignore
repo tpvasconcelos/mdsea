@@ -2,4 +2,6 @@
 *simfiles/*
 *__pycache__*
 mynotes.md
-/assets/videos/*
+assets/videos/*
+build/*
+*.gitignore*
