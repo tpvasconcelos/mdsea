@@ -30,8 +30,8 @@ pip3 install -r requirements.txt
 
 ### Extra requirements
 
-In order to install the complete set
-of requirements and be able to make the most use of mdsea run
+In order to install the complete set of requirements and be able to
+make the most use of mdsea, run
 
 ```sh
 pip3 install -r requirements.txt
@@ -51,13 +51,14 @@ You can find the test scripts inside the `/tests` directory.
 
 You should start by running
 ```sh
+cd tests
 python3 initsetup.py
 ```
 
 which will run a default simulation and store in in
 `./simfiles/_mdsea_testsimulation/*`. You can then run tests for the
-multiple visualization tools (`/tests/vis_*.py`). See bellow how to run
-the Blender tests! The `/tests/cleanup.py` script will remove the
+multiple visualization tools (`/tests/vis_*.py`) - See bellow how to run
+the Blender tests! - The `/tests/cleanup.py` script will remove the
 `/simfiles/_mdsea_testsimulation` directory.
 
 ### Running Blender tests
@@ -126,22 +127,26 @@ anim = Animation(sm, frame_step=6)
 anim.anim()
 ```
 
-The output should look something like (You can ignore the warning):
+The output should look something like this (you can ignore the warning):
 ```
 [INFO:mdsea.core] New simulation: {'id': '153833190314711', 'path': 'simfiles/153833190314711'}
 [WARNING:mdsea.core] A ValueError ('Not a location (invalid object ID)') was catched while trying to update a dataset. However, we noticed that the datafile in question wasn't open. We'll try to fix this and retry...
 [INFO:mdsea.simulator] ProgresBar (Simulator): {'step': '55/1000', 'percentage': 6, 'ETA': '1s'}
+[INFO:mdsea.simulator] ProgresBar (Simulator): {'step': '146/1000', 'percentage': 15, 'ETA': '2s'}
+[INFO:mdsea.simulator] ProgresBar (Simulator): {'step': '255/1000', 'percentage': 26, 'ETA': '2s'}
 ...
+[INFO:mdsea.simulator] ProgresBar (Simulator): {'step': '855/1000', 'percentage': 86, 'ETA': '0s'}
+[INFO:mdsea.simulator] ProgresBar (Simulator): {'step': '946/1000', 'percentage': 95, 'ETA': '0s'}
 [INFO:mdsea.simulator] ProgresBar (Simulator): {'status': 'finished', 'lifetime': '2.6s'}
 [INFO:mdsea.vis.mpl] Plotting anim_loop...
 ```
 
 
-## Galery
+## Gallery
 
 ### 3D renderings
 
-![1d](assets/images/untitled copy 2.png)
+![1d](assets/images/untitled-copy-2.png)
 
 ![1d](assets/images/spong.png)
 
