@@ -1,7 +1,0 @@
-*.idea/*
-*simfiles/*
-*__pycache__*
-mynotes.md
-assets/videos/*
-build/*
-*.gitignore*
