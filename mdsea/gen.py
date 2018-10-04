@@ -96,18 +96,17 @@ class VelGen(_Gen):
     # ==================================================================
     
     def _mb_coords(self, i, r, thetas):
-        cc = r
         if i == self.ndim - 1:
-            cc *= np.cos(thetas[self.ndim - 2]) \
-                  * np.prod([np.sin(thetas[j]) for j in range(self.ndim - 2)])
+            cc = r * np.cos(thetas[self.ndim - 2]) \
+                 * np.prod([np.sin(thetas[j]) for j in range(self.ndim - 2)])
         elif i == self.ndim - 2:
-            cc *= np.sin(thetas[self.ndim - 2]) \
-                  * np.prod([np.sin(thetas[j]) for j in range(self.ndim - 2)])
+            cc = r * np.sin(thetas[self.ndim - 2]) \
+                 * np.prod([np.sin(thetas[j]) for j in range(self.ndim - 2)])
         elif i == 0:
-            cc *= np.cos(thetas[0])
+            cc = r * np.cos(thetas[0])
         else:
-            cc *= np.cos(thetas[i]) \
-                  * np.prod([np.sin(thetas[j]) for j in range(i)])
+            cc = r * np.cos(thetas[i]) \
+                 * np.prod([np.sin(thetas[j]) for j in range(i)])
         return cc
     
     # ==================================================================
@@ -117,24 +116,30 @@ class VelGen(_Gen):
     def mb(self, mass, temp, k_boltzmann) -> np.ndarray:
         """ Generate Maxwell-Boltzmann velocites. """
         
+        # Special case for T=0  ---
         if temp == 0:
             self.coords = np.zeros((self.ndim, self.nparticles), dtype=DTYPE)
             self.generated = True
             return self._get()
         
+        # Generate a MB distribution of speeds  ---
         # Note: interp1d is a class
         inv_cdf = interp1d(mb_cdf(mass, temp, k_boltzmann),
                            MONTECARLO_SPEEDRANGE)
         self.speeds = inv_cdf(np.random.random(self.nparticles))
         
+        # Generate spherical coordinates (range)  ---
+        # One of the coordinates has range [0, 2*pi],
+        # the others (ndim - 1) have range [0, pi]
         thetas = [np.random.uniform(0, math.pi, self.nparticles)
                   for _ in range(self.ndim - 2)]
-        # if self.ndim > 1:
         thetas.append(np.random.uniform(0, 2 * math.pi, self.nparticles))
         
+        # Get the cartesian coordinates  ---
         self.coords = np.array([self._mb_coords(i, self.speeds, thetas)
-                                for i in range(0, self.ndim)])
-        
+                                for i in range(self.ndim)])
+        print(self.coords)
+        # FINISH  ---
         self.generated = True
         return self._get()
 
@@ -148,36 +153,37 @@ class CoordGen(_Gen):
         self.boxlen = boxlen
     
     # ==================================================================
+    # ---  Private methods: Cartesian Coordinates
+    # ==================================================================
+    
+    # def _foo_coords(self, ...):
+    #     return
+    
+    # ==================================================================
     # ---  Public/User methods: Generators
     # ==================================================================
     
     def simplecubic(self) -> np.ndarray:
-        
-        def coord_i(i):
-            f_rep = ppr ** i
-            f_til = ppr ** (self.ndim - (i + 1))
-            return pspan * np.tile(ppr_range.repeat(f_rep), f_til)
-        
         # particles per row  ---
         ppr = round(self.nparticles ** (1 / self.ndim))
         assert self.nparticles == ppr ** self.ndim
         ppr_range = 0.5 + np.fromiter(list(range(ppr)), dtype=int)
         # particle span  ---
         pspan = self.boxlen / ppr
-        
-        for n in range(self.ndim):
-            self.coords[n] = coord_i(n)
-        
+        for i in range(self.ndim):
+            self.coords[i] = pspan * np.tile(ppr_range.repeat(ppr ** i),
+                                             ppr ** (self.ndim - i - 1))
+        # FINISH  ---
         self.generated = True
         return self._get()
     
     def random(self, pradius) -> np.ndarray:
-        
-        # Usable box span
+        # Usable box span  ---
         us = self.boxlen - 2 * pradius
-        
-        self.coords = us * np.random.random((self.ndim, self.nparticles)) \
-                      + pradius
-        
+        # Distribute coordinates randomly  ---
+        self.coords = us * np.random.random((self.ndim, self.nparticles))
+        # Set/add positive offset  ---
+        self.coords += pradius
+        # FINISH  ---
         self.generated = True
         return self._get()

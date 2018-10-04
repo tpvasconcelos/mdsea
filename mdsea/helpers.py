@@ -79,9 +79,7 @@ def get_dt(radius: float, mean_speed: float,
 
 class ProgressBar:
     
-    def __init__(self,
-                 name: str,
-                 stop: int,
+    def __init__(self, name: str, stop: int,
                  loggername: str = __name__,
                  step: int = 10) -> None:
         
