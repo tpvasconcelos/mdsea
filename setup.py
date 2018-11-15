@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 # coding: utf-8
-from distutils.core import setup
+from setuptools import setup
 
 AUTHOR = dict(
     name='Tomas Pereira de Vasconcelos',
