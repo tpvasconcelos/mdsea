@@ -50,10 +50,11 @@ cgen = md.CoordGen(nparticles=sm.NUM_PARTICLES,
                    ndim=sm.NDIM,
                    boxlen=sm.LEN_BOX)
 sm.r_vec = cgen.simplecubic()
+# sm.r_vec = cgen.random(sm.RADIUS_PARTICLE)
 
 # ======================================================================
 # ---  Run the simulation
 # ======================================================================
 
-sim = md.ContinuousPotentialSolver(sm, algorithm='verlet')
+sim = md.ContinuousPotentialSolver(sm)
 sim.run_simulation()
