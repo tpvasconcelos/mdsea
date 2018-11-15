@@ -7,10 +7,3 @@ sm = md.SysManager.load(simid="_mdsea_testsimulation")
 
 anim = VpythonAnimation(sm)
 anim.run()
-
-if True:
-    import time
-    
-    while 1:
-        anim.run()
-        time.sleep(1)
