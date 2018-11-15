@@ -138,7 +138,7 @@ class VelGen(_Gen):
         # Get the cartesian coordinates  ---
         self.coords = np.array([self._mb_coords(i, self.speeds, thetas)
                                 for i in range(self.ndim)])
-        print(self.coords)
+
         # FINISH  ---
         self.generated = True
         return self._get()
