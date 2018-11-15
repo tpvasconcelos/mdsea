@@ -2,7 +2,8 @@
 # coding: utf-8
 import matplotlib
 
-matplotlib.use('TkAgg')
+# TODO: review backend handling. What if someone doesn't have Qt5...?
+matplotlib.use('Qt5Agg')
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
