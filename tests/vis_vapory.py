@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 # coding: utf-8
-from tests import mdsea as md
 from mdsea.vis.vpr import VaporyAnimation
+from tests import mdsea as md
 
 sm = md.SysManager.load(simid="_mdsea_testsimulation")
 
