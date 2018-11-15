@@ -121,6 +121,7 @@ class _BaseSimulator:
         # log.debug("memory (rss) / memory (vms) = %.2f", mem_ratio)
         values = [[self.sm.r_vec], [self.sm.v_vec],
                   [self.mean_epot], [self.mean_ekin], [self.temp]]
+        
         for dataset, val in zip(self.sm.all_dsnames, values):
             self.sm.updateds(dataset, val, self.step)
     
@@ -235,7 +236,17 @@ class _BaseSimulator:
         if radius is None:
             # If no cutoff radius is passed, we'll return everything
             if return_drunit:
-                rtrn.append(dr_vecs / self.distances[:, np.newaxis])
+                rtrn.append(
+                    np.nan_to_num(dr_vecs / self.distances[:, np.newaxis]))
+                # with np.errstate(invalid='raise'):
+                #     try:
+                #         rtrn.append(dr_vecs / self.distances[:, np.newaxis])
+                #     except FloatingPointError as e:
+                #         with np.errstate(invalid='ignore'):
+                #             print(e)
+                #             drunit = dr_vecs / self.distances[:, np.newaxis]
+                #             drunit[np.where(drunit == np.nan)] = 1 / self.sm.NDIM ** (1 / self.sm.NDIM)
+                #             rtrn.append(drunit)
             if return_where:
                 # Remember: If no cutoff radius is passed, we'll return
                 # everything. Therefore, the where table is all True!

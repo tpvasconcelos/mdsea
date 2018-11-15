@@ -228,7 +228,7 @@ class SysManager:
         # Datasets with shape=(STEPS,)
         self.potenergy_dsname = cfm.POTENERGY_DSNAME
         self.kinenergy_dsname = cfm.KINENERGY_DSNAME
-        self.dists_dsname = cfm.DISTS_DSNAME
+        # self.dists_dsname = cfm.DISTS_DSNAME
         self.temp_dsname = cfm.TEMP_DSNAME
         self.oned_dsnames = [self.potenergy_dsname, self.kinenergy_dsname,
                              self.temp_dsname]
