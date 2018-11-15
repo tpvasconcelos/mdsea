@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3
 # coding: utf-8
-import mdsea as md
+from tests import mdsea as md
 
 # Instantiate system manager  ---
 sm = md.SysManager.new(ndim=2, num_particles=2 ** 2, steps=100,
@@ -23,5 +23,5 @@ sim.run_simulation()
 # Run 2D animation with matplotlib  ---
 from mdsea.vis.mpl import Animation
 
-anim = Animation(sm, frame_step=2)
+anim = Animation(sm, frame_step=5)
 anim.anim(colorspeed=True)

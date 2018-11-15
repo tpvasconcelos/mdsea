@@ -3,7 +3,7 @@
 from mdsea.vis.mpl import Animation
 from tests import mdsea as md
 
-FRAME_STEP = 6
+FRAME_STEP = 5
 
 sm = md.SysManager.load(simid="_mdsea_testsimulation")
 
