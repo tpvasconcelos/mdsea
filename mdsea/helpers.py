@@ -33,7 +33,7 @@ def check_val(name: str, val: Any, options: Tuple[Any, ...]) -> None:
     """ Check variable value. """
     if val not in options:
         msg = f"Illegal value ({val}) for {name}. " \
-              f"It should be one of: {options}"
+            f"It should be one of: {options}"
         raise ValueError(msg)
 
 
@@ -41,7 +41,7 @@ def check_type(name: str, val: Any, target_types: Tuple[type, ...]) -> None:
     """ Check variable type. """
     if type(val) not in target_types:
         msg = f"Illegal type ({type(val)}) for {name}. " \
-              f"It should be one of: {target_types}"
+            f"It should be one of: {target_types}"
         raise TypeError(msg)
 
 
@@ -51,7 +51,7 @@ def check_size(names: Tuple[str, ...], vals: Tuple[Sequence, ...]) -> None:
     for v in vals:
         if len(v) != l1:
             msg = "The following variables all " \
-                  f"need to be the same lenght: {names}"
+                f"need to be the same lenght: {names}"
             raise ValueError(msg)
 
 
