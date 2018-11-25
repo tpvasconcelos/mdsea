@@ -98,46 +98,44 @@ _interactive_ shells (like the one linked to Terminal).
 ## Example
 
 ```python
-#!/usr/local/bin/python3
-# coding: utf-8
 import mdsea as md
 
-# Instantiate system manager
-sm = md.SysManager.new(ndim=2, num_particles=8 ** 2, steps=1000,
-                       vol_fraction=0.4, radius_particle=0.5,
+# Instantiate system manager  ---
+sm = md.SysManager.new(ndim=2, num_particles=6 ** 2, steps=500,
+                       vol_fraction=0.2, radius_particle=0.5,
                        pot=md.Potential.lennardjones(1, 1))
 
-# Generate initial velocities
+# Generate initial velocities  ---
 vgen = md.VelGen(ndim=sm.NDIM, nparticles=sm.NUM_PARTICLES)
 sm.v_vec = vgen.mb(sm.MASS, sm.TEMP, sm.K_BOLTZMANN)
 
-# Generate initial positions
-cgen = md.CoordGen(ndim=sm.NDIM, nparticles=sm.NUM_PARTICLES,
-                   boxlen=sm.LEN_BOX)
+# Generate initial positions  ---
+cgen = md.PosGen(ndim=sm.NDIM, nparticles=sm.NUM_PARTICLES,
+                 boxlen=sm.LEN_BOX)
 sm.r_vec = cgen.simplecubic()
 
-# Run the simulation
+# Run the simulation  ---
 sim = md.ContinuousPotentialSolver(sm)
 sim.run_simulation()
 
-# Run 2D animation with matplotlib
+# Run 2D animation with matplotlib  ---
 from mdsea.vis.mpl import Animation
 
 anim = Animation(sm, frame_step=6)
-anim.anim()
+anim.anim(colorspeed=True)
 ```
 
 The output should look something like this (you can ignore the warning):
 ```
-[INFO:mdsea.core] New simulation: {'id': '153833190314711', 'path': 'simfiles/153833190314711'}
+[INFO:mdsea.core] New simulation: {'id': '1543180726724682', 'path': 'simfiles/1543180726724682'}
 [WARNING:mdsea.core] A ValueError ('Not a location (invalid object ID)') was catched while trying to update a dataset. However, we noticed that the datafile in question wasn't open. We'll try to fix this and retry...
-[INFO:mdsea.simulator] ProgresBar (Simulator): {'step': '55/1000', 'percentage': 6, 'ETA': '1s'}
-[INFO:mdsea.simulator] ProgresBar (Simulator): {'step': '146/1000', 'percentage': 15, 'ETA': '2s'}
-[INFO:mdsea.simulator] ProgresBar (Simulator): {'step': '255/1000', 'percentage': 26, 'ETA': '2s'}
+[INFO:mdsea.simulator] ProgresBar (Simulator): {'step': '28/500', 'percentage': 6, 'ETA': '1s'}
+[INFO:mdsea.simulator] ProgresBar (Simulator): {'step': '73/500', 'percentage': 15, 'ETA': '1s'}
+[INFO:mdsea.simulator] ProgresBar (Simulator): {'step': '128/500', 'percentage': 26, 'ETA': '1s'}
 ...
-[INFO:mdsea.simulator] ProgresBar (Simulator): {'step': '855/1000', 'percentage': 86, 'ETA': '0s'}
-[INFO:mdsea.simulator] ProgresBar (Simulator): {'step': '946/1000', 'percentage': 95, 'ETA': '0s'}
-[INFO:mdsea.simulator] ProgresBar (Simulator): {'status': 'finished', 'lifetime': '2.6s'}
+[INFO:mdsea.simulator] ProgresBar (Simulator): {'step': '428/500', 'percentage': 86, 'ETA': '0s'}
+[INFO:mdsea.simulator] ProgresBar (Simulator): {'step': '473/500', 'percentage': 95, 'ETA': '0s'}
+[INFO:mdsea.simulator] ProgresBar (Simulator): {'status': 'finished', 'lifetime': '1.1s'}
 [INFO:mdsea.vis.mpl] Plotting anim_loop...
 ```
 
