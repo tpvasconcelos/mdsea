@@ -226,9 +226,6 @@ class Animation(MPL):
             clr = self.colors[step]
         self.ax_scatter.set_offsets(self.r_vecs[step])
         self.ax_scatter.set_facecolor(clr)
-        # print(self.r_vecs[step])
-        # print(clr)
-        # exit()
     
     def _plt_particles_circles(self, step: int) -> None:
         clr = self.dflt_clr
@@ -306,8 +303,8 @@ class Animation(MPL):
     
     def _clrs_init(self, cmap: Optional[Colormap] = None):
         if cmap is None:
-            # DIVERGING: ['coolwarm', 'RdBu_r', 'jet']
-            # SEQUENTIAL: ['gist_heat', 'autumn', 'hot']
+            # DIVERGING -> ['coolwarm', 'RdBu_r', 'jet']
+            # SEQUENTIAL -> ['gist_heat', 'autumn', 'hot']
             num_colors = 256 / 2
             cmap = cm.get_cmap(name='autumn', lut=num_colors)
         
