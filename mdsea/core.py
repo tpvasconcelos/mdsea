@@ -82,8 +82,8 @@ class SysManager:
         # Bunch 'o variables  ---
         
         self.RESTITUTION_COEFF = restitution_coeff
-        self.NUM_PARTICLES = num_particles
         self.RADIUS_PARTICLE = radius_particle
+        self.NUM_PARTICLES = num_particles
         self.VOL_FRACTION = vol_fraction
         self.ISOTHERMAL = isothermal
         self.R_CUTOFF = r_cutoff
@@ -97,8 +97,8 @@ class SysManager:
         self.PBC = pbc
         
         self._settings.update(restitution_coeff=restitution_coeff)
-        self._settings.update(num_particles=num_particles)
         self._settings.update(radius_particle=radius_particle)
+        self._settings.update(num_particles=num_particles)
         self._settings.update(vol_fraction=vol_fraction)
         self._settings.update(isothermal=isothermal)
         self._settings.update(r_cutoff=r_cutoff)
