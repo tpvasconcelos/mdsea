@@ -76,7 +76,7 @@ class MPL(Vis):
         plt.plot(self.total_energy, lw=lw, label=label_te)
         plt.legend(loc='best', prop={'size': font_size})
         plt.grid()
-        self._safe_show()
+        self._safe_show(self.plt_energies.__name__)
     
     def plt_temp(self,
                  lw: float = 2,
@@ -85,7 +85,7 @@ class MPL(Vis):
         plt.plot(self.temp, lw=lw, label=label)
         plt.legend(loc='best', prop={'size': fontsize})
         plt.grid()
-        self._safe_show()
+        self._safe_show(self.plt_temp.__name__)
     
     def plt_sd(self,
                fontsize: float = 18,
@@ -101,7 +101,7 @@ class MPL(Vis):
         ax.set_ylabel('PDF', size=fontsize)
         plt.legend(loc='best', prop={'size': fontsize})
         plt.grid()
-        self._safe_show()
+        self._safe_show(self.plt_sd.__name__)
     
     def plt_rdf(self,
                 lw: float = 2,
@@ -111,10 +111,11 @@ class MPL(Vis):
         plt.plot(self.temp, lw=lw, label=label)
         plt.legend(loc='best', prop={'size': fontsize})
         plt.grid()
-        self._safe_show()
+        self._safe_show(self.plt_rdf.__name__)
     
     @staticmethod
-    def _safe_show() -> None:
+    def _safe_show(name: str) -> None:
+        log.info(f'Plotting {name}...')
         try:
             plt.show()
         finally:
@@ -340,8 +341,7 @@ class Animation(MPL):
                         valinit=0, valfmt='%1.f')
         slider.on_changed(self._update_slider)
         
-        log.info("Plotting plot_slider...")
-        self._safe_show()
+        self._safe_show(self.plt_slider.__name__)
     
     def anim(self,
              scatter: Optional[bool] = None,
@@ -368,8 +368,7 @@ class Animation(MPL):
             repeat=loop, repeat_delay=2 * spf
             )
         
-        log.info("Plotting anim_loop...")
-        self._safe_show()
+        self._safe_show(self.anim.__name__)
     
     def export_animation(self,
                          dpi: int = 72,
