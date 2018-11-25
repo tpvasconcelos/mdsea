@@ -68,7 +68,6 @@ class _Gen:
         self.generated = False
         
         # This will be updated by a 'generator'
-        self.speeds = None
         self.coords = np.zeros((self.ndim, self.nparticles), dtype=DTYPE)
         
         # ==================================================================
@@ -90,6 +89,8 @@ class VelGen(_Gen):
     def __init__(self, nparticles: int, ndim: int) -> None:
         
         super(VelGen, self).__init__(nparticles, ndim)
+        
+        self.speeds = None
     
     # ==================================================================
     # ---  Private methods: Cartesian Coordinates
@@ -138,17 +139,16 @@ class VelGen(_Gen):
         # Get the cartesian coordinates  ---
         self.coords = np.array([self._mb_coords(i, self.speeds, thetas)
                                 for i in range(self.ndim)])
-
+        
         # FINISH  ---
         self.generated = True
         return self._get()
 
 
-class CoordGen(_Gen):
-    def __init__(self, nparticles: int, ndim: int,
-                 boxlen: float) -> None:
+class PosGen(_Gen):
+    def __init__(self, nparticles: int, ndim: int, boxlen: float) -> None:
         
-        super(CoordGen, self).__init__(nparticles, ndim)
+        super(PosGen, self).__init__(nparticles, ndim)
         
         self.boxlen = boxlen
     

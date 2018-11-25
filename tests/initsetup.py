@@ -46,9 +46,9 @@ vgen = md.VelGen(nparticles=sm.NUM_PARTICLES,
 sm.v_vec = vgen.mb(sm.MASS, sm.TEMP, sm.K_BOLTZMANN)
 
 # Generate initial positions  ---
-cgen = md.CoordGen(nparticles=sm.NUM_PARTICLES,
-                   ndim=sm.NDIM,
-                   boxlen=sm.LEN_BOX)
+cgen = md.PosGen(nparticles=sm.NUM_PARTICLES,
+                 ndim=sm.NDIM,
+                 boxlen=sm.LEN_BOX)
 sm.r_vec = cgen.simplecubic()
 # sm.r_vec = cgen.random(sm.RADIUS_PARTICLE)
 

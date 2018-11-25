@@ -54,6 +54,6 @@ del DIR_SIMFILES, LOG_LEVEL, LOG_FORMAT_STOUT, LOGFILE_NAME, LOGFILE_MAXBYTES
 from mdsea import vis
 from mdsea.analytics import Analyser, make_mp4
 from mdsea.core import SysManager
-from mdsea.gen import CoordGen, VelGen
+from mdsea.gen import PosGen, VelGen
 from mdsea.potentials import Potential
 from mdsea.simulator import ContinuousPotentialSolver

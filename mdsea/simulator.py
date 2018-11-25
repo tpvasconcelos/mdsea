@@ -245,7 +245,8 @@ class _BaseSimulator:
                 #         with np.errstate(invalid='ignore'):
                 #             print(e)
                 #             drunit = dr_vecs / self.distances[:, np.newaxis]
-                #             drunit[np.where(drunit == np.nan)] = 1 / self.sm.NDIM ** (1 / self.sm.NDIM)
+                #             drunit[np.where(drunit == np.nan)] = \
+                #                 1 / self.sm.NDIM ** (1 / self.sm.NDIM)
                 #             rtrn.append(drunit)
             if return_where:
                 # Remember: If no cutoff radius is passed, we'll return
@@ -501,7 +502,7 @@ class ContinuousPotentialSolver(_BaseSimulator):
             self.apply_algorithm = algrthms_tbl[algorithm]
         except KeyError:
             msg = f"Algorithm '{algorithm}' not found " \
-                  f"in {tuple(algrthms_tbl.keys())}"
+                f"in {tuple(algrthms_tbl.keys())}"
             raise KeyError(msg)
     
     def algorithm_old(self):
