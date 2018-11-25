@@ -23,13 +23,13 @@ log = logging.getLogger(__name__)
 log.addHandler(loghandler)
 
 
-def color(cmap: Colormap, speed: float, speed_limit: float,
-          alpha: bool = True) -> tuple:
-    # TODO: vectorize this such that 'speed' can be an array
+def speed2color(cmap: Colormap, speed: float, speed_limit: float,
+                alpha: bool = True) -> tuple:
+    # TODO: vectorize this s.t. 'speed' can be an array
     # speed_ratio = round(cmap.N * speed / speed_limit)
     speed_ratio = cmap.N - int(cmap.N * speed / speed_limit)
     if cmap.name != 'autumn':
-        # Reverse the colors for the 'autumn' color map.
+        # Reverse the colors for the 'autumn' colormap.
         speed_ratio = cmap.N - speed_ratio
     if not alpha:
         # Remove alpha (transparency)
@@ -310,7 +310,7 @@ class Animation(MPL):
             num_colors = 256 / 2
             cmap = cm.get_cmap(name='autumn', lut=num_colors)
         
-        self.colors = [[color(cmap, s, self.maxspeed) for s in ss]
+        self.colors = [[speed2color(cmap, s, self.maxspeed) for s in ss]
                        for ss in self.speeds]
     
     # ==================================================================
