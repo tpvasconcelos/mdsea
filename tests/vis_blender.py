@@ -7,7 +7,6 @@ FRAME_STEP = 5
 
 
 def main():
-    # sm = md.SysManager.load(simid="_mdsea_testsimulation")
     sm = md.SysManager.load(simid="_mdsea_testsimulation")
     
     anim = BlenderAnimation(sm, frame_step=FRAME_STEP)
@@ -16,7 +15,7 @@ def main():
     anim.quick_setup(engine='CYCLES')
     anim.set_view(shade='SOLID')
     
-    # xtra objects
+    # Extra objects
     anim.add_light('front')
     anim.add_light('left')
     anim.add_light('above')
