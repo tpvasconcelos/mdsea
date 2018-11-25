@@ -11,7 +11,7 @@ anim = Animation(sm, frame_step=FRAME_STEP)
 
 # anim.dark_theme = True
 
-# anim.plot_slider(scatter=True, colorspeed=True)
+# anim.plt_slider(scatter=True, colorspeed=True)
 anim.anim(scatter=False, colorspeed=True)
 
 # anim.export_animation(dpi=36, timeit=True)

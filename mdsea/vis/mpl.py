@@ -317,11 +317,11 @@ class Animation(MPL):
     # ---  Public methods || User methods
     # ==================================================================
     
-    def plot_slider(self,
-                    scatter: Optional[bool] = None,
-                    draw_wells: bool = False,
-                    colorspeed: bool = False
-                    ) -> None:
+    def plt_slider(self,
+                   scatter: Optional[bool] = None,
+                   draw_wells: bool = False,
+                   colorspeed: bool = False
+                   ) -> None:
         """ Plot 2D slider. """
         if isinstance(scatter, bool):
             self.scatter = scatter
