@@ -6,24 +6,22 @@ matplotlib visualizations and animations.
 
 """
 
+import logging
+from typing import Optional, Tuple
+
 import matplotlib
 
 # TODO: review backend handling. What if someone doesn't have Qt5...?
 matplotlib.use('Qt5Agg')
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider
+import numpy as np
+from matplotlib.colors import Colormap
+
+from mdsea import loghandler
 from mdsea.analytics import Vis
 from mdsea.core import SysManager
 from mdsea.helpers import ProgressBar
-from typing import Tuple
-import numpy as np
-from typing import Optional
-import logging
-from mdsea import loghandler
-import matplotlib.animation as animation
-import matplotlib.cm as cm
-from matplotlib.colors import Colormap
 
 log = logging.getLogger(__name__)
 log.addHandler(loghandler)
@@ -328,6 +326,8 @@ class Animation(MPL):
                    colorspeed: bool = False
                    ) -> None:
         """ Plot 2D slider. """
+        from matplotlib.widgets import Slider
+        
         if isinstance(scatter, bool):
             self.scatter = scatter
         self.draw_wells = draw_wells
@@ -354,6 +354,8 @@ class Animation(MPL):
              loop: bool = True
              ) -> None:
         """ Plot 2D animation loop. """
+        import matplotlib.animation as animation
+        
         if isinstance(scatter, bool):
             self.scatter = scatter
         self.draw_wells = draw_wells
