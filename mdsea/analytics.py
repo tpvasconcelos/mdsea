@@ -54,21 +54,23 @@ class Analyser(object):
     def __init__(self, sm: SysManager) -> None:
         self.sm = sm
         
-        self.r_coords = self.sm.getds(self.sm.rcoord_dsname)
+        # TODO(tpvasconcelos) explain the difference between r_coords & r_vecs
+        self.r_coords = self.sm.get_ds(self.sm.rcoord_dsname)
         self.r_vecs = np.stack(
             (self.r_coords[:, i] for i in range(self.sm.NDIM)), axis=-1)
         
-        self.v_coords = self.sm.getds(self.sm.vcoord_dsname)
+        # TODO(tpvasconcelos) explain the difference between v_coords & v_vecs
+        self.v_coords = self.sm.get_ds(self.sm.vcoord_dsname)
         self.v_vecs = np.stack(
             (self.v_coords[:, i] for i in range(self.sm.NDIM)), axis=-1)
         self.speeds = norm(self.v_vecs, axis=-1)
         self.maxspeed = float(np.mean(self.speeds) + (3 * np.std(self.speeds)))
         
-        self.mean_pot_energies = self.sm.getds(self.sm.potenergy_dsname)
-        self.mean_kin_energies = self.sm.getds(self.sm.kinenergy_dsname)
+        self.mean_pot_energies = self.sm.get_ds(self.sm.potenergy_dsname)
+        self.mean_kin_energies = self.sm.get_ds(self.sm.kinenergy_dsname)
         self.total_energy = self.mean_kin_energies + self.mean_pot_energies
         
-        self.temp = self.sm.getds(self.sm.temp_dsname)
+        self.temp = self.sm.get_ds(self.sm.temp_dsname)
         
         self.mean_pot_energy = np.mean(self.mean_pot_energies)
         self.mean_kin_energy = np.mean(self.mean_kin_energies)
@@ -78,7 +80,7 @@ class Analyser(object):
 
 class Vis(Analyser):
     """ TODO: docstring """
-
+    
     def __init__(self, sm: SysManager, frame_step: int = 1) -> None:
         super(Vis, self).__init__(sm)
         

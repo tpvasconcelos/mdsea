@@ -22,7 +22,7 @@ DIR_SIMFILES = f"{os.getcwd()}/simfiles"
 
 
 def _gen_newid() -> str:
-    """ TODO: docstring """
+    """ Generate new simulation ID. """
     from time import time
     return str(time()).replace('.', '')
 
@@ -70,7 +70,7 @@ class SysManager(object):
         """
         
         # ==============================================================
-        # ---  Parce user arguments/settings
+        # ---  Parse user arguments/settings
         # ==============================================================
         
         # Settings dictionary (we'll save this to a file)
@@ -156,13 +156,13 @@ class SysManager(object):
         # ---  Others settings
         # ==============================================================
         
-        # TODO: These shouldnt be here? They should be in the simulator?
+        # TODO: These shouldn't be here? should be in the simulator?
         self.r_vec = np.zeros((self.NDIM, self.NUM_PARTICLES),
                               dtype=DTYPE)
         self.v_vec = np.zeros((self.NDIM, self.NUM_PARTICLES),
                               dtype=DTYPE)
         
-        # Calculation of the 'box lenght' ('self.LEN_BOX')
+        # Calculation of the 'box length' ('self.LEN_BOX')
         particle_volume = nsphere_volume(self.NDIM, self.RADIUS_PARTICLE)
         box_volume = self.NUM_PARTICLES * particle_volume / self.VOL_FRACTION
         self.LEN_BOX = box_volume ** (1 / self.NDIM)
@@ -244,7 +244,7 @@ class SysManager(object):
     
     def _create_tree(self) -> None:
         """
-        Creates all the nessessary directories for the simulation.
+        Creates all the necessary directories for the simulation.
 
         If it doesn't yet exist, it also creates a 'simulations-folder'.
 
@@ -331,19 +331,27 @@ class SysManager(object):
     
     @classmethod
     def load(cls, simid: str) -> 'SysManager':
-        """ Load an excisting simulation System Manager. """
+        """ Load an existing simulation System Manager. """
+        
         path_sim = cfm.SIM_PATH.format(simid)
         path_settings = cfm.SETTINGS_PATH.format(simid)
-        paths_exist = (os.path.exists(path_sim), os.path.exists(path_settings))
+        paths_exist = (os.path.exists(path_sim),
+                       os.path.exists(path_settings))
+        
+        # Check if the simulation exists
         if not all(paths_exist):
             records = {'id': simid,
                        'path': path_sim,
                        'settings': path_settings}
-            raise FileNotFoundError(f"Couldn't load simulation: {records}")
+            raise FileNotFoundError(f"Could not load simulation: {records}")
+        
         log.info("Loading simulation: %s", simid)
         with open(path_settings, 'rb') as f:
             kwargs: dict = pickle.load(f)
-        kwargs.pop('new_sim')  # we're overwritting this!
+        
+        # Overwrite the new_sim argument
+        kwargs.pop('new_sim')
+        
         return cls(new_sim=False, **kwargs)
     
     # ==================================================================
@@ -371,9 +379,9 @@ class SysManager(object):
         # Remember to close the datafile
         self._close_datafile()
     
-    def updateds(self, dsname: str,
-                 x: Union[list, np.ndarray],
-                 i: int) -> None:
+    def update_ds(self, dsname: str,
+                  x: Union[list, np.ndarray],
+                  i: int) -> None:
         """ Update values of a dataset for a specific index. """
         
         try:
@@ -390,19 +398,19 @@ class SysManager(object):
         except ValueError as e:
             if self.dfile.id.valid:
                 # if file already exists: raise the exception
-                raise ValueError(f"Couldn't update dataset: {e}")
-            msg = "A ValueError ('%s') was catched while trying to update a " \
+                raise ValueError(f"Could not update dataset: {e}")
+            msg = "A ValueError ('%s') was caught while trying to update a " \
                   "dataset. However, we noticed that the datafile in " \
                   "question wasn't open. We'll try to fix this and retry..."
             log.warning(msg, e)
             self._open_datafile()
-            self.updateds(dsname, x, i)
+            self.update_ds(dsname, x, i)
         
         except Exception as e:
             self._close_datafile()
             raise e
     
-    def getds(self, dsname: str) -> np.ndarray:
+    def get_ds(self, dsname: str) -> np.ndarray:
         """ Retrieve data from a specific dataset. """
         try:
             return self.dfile[dsname][:]

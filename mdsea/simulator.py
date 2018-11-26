@@ -123,7 +123,7 @@ class _BaseSimulator:
                   [self.mean_epot], [self.mean_ekin], [self.temp]]
         
         for dataset, val in zip(self.sm.all_dsnames, values):
-            self.sm.updateds(dataset, val, self.step)
+            self.sm.update_ds(dataset, val, self.step)
     
     # ==================================================================
     # ---  Boundary Conditions
