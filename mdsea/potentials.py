@@ -152,16 +152,3 @@ class Potential(object):
         """
         return optimize.fmin(self.pf, 0.5, tuple(self.kwargs.values()),
                              xtol=xtol, disp=False)[0]
-    
-    # Aliases  ---
-    
-    def equilibrium_distance(self, xtol=None):
-        """
-        This method could be used when a potential has several minima.
-        At the moment this just returns self.potminimum(**kwargs)
-        
-        """
-        log.warning("Use .potminimum() instead of .equilibrium_distance()!")
-        if not xtol:
-            self.potminimum()
-        return self.potminimum(xtol)
