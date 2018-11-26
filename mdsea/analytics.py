@@ -17,7 +17,7 @@ def make_mp4(fname: str,
              stills_dir: str,
              fps: float,
              timeit: bool = False) -> None:
-    """ TODO: doc string """
+    """ Render mp4 video file from image stills. """
     
     if timeit:
         from time import time
@@ -35,7 +35,7 @@ def make_mp4(fname: str,
         "outfile": fname
         }
     
-    log.info("Running ffmpeg's stills-to-mp4 convertion...")
+    log.info("Running ffmpeg's stills-to-mp4 conversion...")
     
     # ffmpeg -i img%06d.png -vcodec libx264 -b:v 6000k
     # -r 24 -framerate 24 -pix_fmt yuv420p movie.mp4

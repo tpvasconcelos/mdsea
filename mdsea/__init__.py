@@ -31,7 +31,11 @@ LOGFILE_MAXBYTES = 500000  # 500 kB
 LOGFILE_NAME = f"{DIR_SIMFILES}/_mdsea_logdump.log"
 LOG_FORMAT_STOUT = "[%(levelname)s:%(name)s] %(message)s"
 LOG_FORMAT_FILE = "%(asctime)s - [%(levelname)s:%(name)s] %(message)s"
-SUPRESSED_MODULES = ('matplotlib', 'apptools', 'asyncio', 'mayavi', 'pyface')
+SUPPRESSED_MODULES = ('matplotlib',
+                      'apptools',
+                      'asyncio',
+                      'mayavi',
+                      'pyface')
 
 
 def _setup_logging(format_file, format_stout, level, filename,
@@ -41,10 +45,10 @@ def _setup_logging(format_file, format_stout, level, filename,
     import os
     from logging.handlers import RotatingFileHandler
     
-    # Supress logging from other libraries by
+    # Suppress logging from other libraries by
     # setting their logging level to CRITICAL
-    # TODO: find better way to suppress loggers != mdsea.*
-    for log in supress:
+    # TODO(tpvasconcelos) find better way to suppress loggers != mdsea.*
+    for log in suppress:
         logging.getLogger(log).setLevel(logging.CRITICAL)
     
     # Basic config
@@ -65,7 +69,7 @@ def _setup_logging(format_file, format_stout, level, filename,
 
 loghandler = _setup_logging(LOG_FORMAT_FILE, LOG_FORMAT_STOUT,
                             LOG_LEVEL, LOGFILE_NAME,
-                            LOGFILE_MAXBYTES, SUPRESSED_MODULES)
+                            LOGFILE_MAXBYTES, SUPPRESSED_MODULES)
 
 # Clean up
 del DIR_SIMFILES, LOG_LEVEL, LOG_FORMAT_STOUT, LOGFILE_NAME, LOGFILE_MAXBYTES
