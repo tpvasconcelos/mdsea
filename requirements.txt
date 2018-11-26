@@ -2,6 +2,7 @@ numpy
 scipy
 h5py
 matplotlib
-mayavi
 vapory
 Pillow
+vpython
+mayavi
