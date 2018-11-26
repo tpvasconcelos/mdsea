@@ -11,8 +11,12 @@ from typing import Optional, Tuple
 
 import matplotlib
 
-# TODO: review backend handling. What if someone doesn't have Qt5...?
-matplotlib.use('Qt5Agg')
+try:
+    matplotlib.use('Qt5Agg')
+except ValueError:
+    matplotlib.interactive(True)
+
+import matplotlib.cm as cm
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
