@@ -1,5 +1,11 @@
 #!/usr/local/bin/python
 # coding: utf-8
+
+"""
+Blender objetcs.
+
+"""
+
 import logging
 import math
 from typing import Iterable, List, Optional, Tuple, Union
@@ -25,10 +31,7 @@ def light(engine: str,
           rot: Optional[Tuple3] = None,
           dim: Optional[Tuple3] = None
           ) -> Object:
-    """
-    # TODO: doc string
-    
-    """
+    """ Light object. """
     
     if loc is None:
         loc = (5 * len_box, 0.5 * len_box, 3 * len_box)
@@ -57,9 +60,8 @@ def light(engine: str,
     return obj
 
 
-# noinspection PyArgumentEqualDefault,PyCallByClass,PyTypeChecker
-# noinspection PyUnresolvedReferences
 def _render_light(id_, loc: Tuple3, rot: Tuple3) -> Object:
+    """ Light object (render engine). """
     dist = math.sqrt(sum(c ** 2 for c in loc))
     if id_ == 'above':
         bpy.ops.object.lamp_add(type='SUN', location=loc, rotation=rot)
@@ -89,10 +91,7 @@ def glasswalls(engine: str, len_box: float,
                which: Union[Iterable[str], str] = 'all',
                except_: Optional[Iterable[str]] = None
                ) -> List[Object]:
-    """
-    # TODO: doc string
-
-    """
+    """ Glass wall object. """
     
     if mat is None:
         mat = materials.glasswall(engine)
@@ -205,10 +204,7 @@ def floor(engine: str, len_box: float,
           loc: Optional[Tuple3] = None,
           dim: Optional[Tuple3] = None
           ) -> Object:
-    """
-    # TODO: doc string
-
-    """
+    """ Floor object. """
     
     if mat is None:
         mat = materials.floor(engine)

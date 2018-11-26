@@ -1,5 +1,11 @@
 #!/usr/local/bin/python
 # coding: utf-8
+
+"""
+Blender animation.
+
+"""
+
 import logging
 import math
 from typing import Optional, Tuple
@@ -22,6 +28,8 @@ Tuple4 = Tuple[float, float, float, float]
 
 
 class BlenderAnimation(Vis):
+    """ Blender animation. """
+    
     def __init__(self, sm: SysManager,
                  frame_step: int = 1) -> None:
         super(BlenderAnimation, self).__init__(sm, frame_step)
@@ -71,11 +79,14 @@ class BlenderAnimation(Vis):
     
     @staticmethod
     def _rm_defaultobjects() -> None:
-        for obj_name in ("Cube", "Lamp"):
+        """ Remove the default blender objects. """
+        dflt_objects = ("Cube", "Lamp")
+        for obj_name in dflt_objects:
             bpy.data.objects[obj_name].select = True
             bpy.ops.object.delete()
     
     def _set_sceneframe(self, frame: int, advance: bool = True) -> None:
+        """ Set the scene frame. """
         self.scene.frame_set(frame=frame)
         if advance:
             self.frame_num += 1
@@ -102,6 +113,7 @@ class BlenderAnimation(Vis):
                                cycles_samples: int = 256,
                                render_raytrace: bool = False
                                ) -> None:
+        """ Set basic render preferences. """
         # Dimensions
         self.scene.render.resolution_x = resolution_x
         self.scene.render.resolution_y = resolution_y
@@ -172,6 +184,7 @@ class BlenderAnimation(Vis):
     def create_particle_system(self,
                                mat: Optional[Material] = None
                                ) -> None:
+        """ Create a particle system. """
         
         # Create particles (you need to create a reference
         # particle before creating the particle system!)
@@ -241,6 +254,7 @@ class BlenderAnimation(Vis):
         bpy.ops.wm.save_as_mainfile(filepath=path)
     
     def bake(self) -> None:
+        """ Bake particle system from cache. """
         # Select and activate particle system
         self.particle_sys.select = True
         self.scene.objects.active = self.particle_sys
@@ -250,6 +264,7 @@ class BlenderAnimation(Vis):
         bpy.ops.ptcache.bake_from_cache(cc)
     
     def run(self) -> None:
+        """ Run animation. """
         
         # Animate particles step-by-step
         for self.step in np.arange(0, self.sm.STEPS, self.frame_step):
@@ -289,8 +304,7 @@ class BlenderAnimation(Vis):
     
     @staticmethod
     def set_world(horizon_color: Tuple3 = (0.5, 0.7, 0.8)) -> None:
-        # if horizon_color is None:
-        #     horizon_color = (0.5, 0.5, 0.55)
+        """ Set world. """
         bpy.data.worlds["World"].horizon_color = horizon_color
         bpy.data.worlds["World"].cycles_visibility.camera = False
     
@@ -298,6 +312,7 @@ class BlenderAnimation(Vis):
     def set_view(shade: str = 'RENDERED',
                  perspective: str = 'CAMERA'
                  ) -> None:
+        """ Set view. """
         # Set view perspective
         area = next(a for a in bpy.context.screen.areas if a.type == 'VIEW_3D')
         area.spaces[0].region_3d.view_perspective = perspective
@@ -335,6 +350,7 @@ class BlenderAnimation(Vis):
                      clip_end: Optional[float] = None,
                      focal_lenght: float = 45,
                      sensor_width: float = 32) -> None:
+        """ Setup camera. """
         if loc is None:
             loc = (2.5 * self.sm.LEN_BOX,
                    -0.75 * self.sm.LEN_BOX,
@@ -386,6 +402,7 @@ class BlenderAnimation(Vis):
     # noinspection PyCallByClass,PyTypeChecker
     @staticmethod
     def render(opengl: bool = False, ) -> None:
+        """ Render animation. """
         if opengl:
             bpy.ops.render.opengl(animation=True)
             return

@@ -1,5 +1,11 @@
 #!/usr/local/bin/python
 # coding: utf-8
+
+"""
+Blender materials.
+
+"""
+
 import logging
 import math
 import random
@@ -22,12 +28,13 @@ Tuple4 = Tuple[float, float, float, float]
 # ======================================================================
 
 def set_material(object_, mat) -> None:
+    """ Set a material to an object. """
     object_.data.materials.clear()
     object_.data.materials.append(mat)
 
 
-# TODO: not used
 def _get_speed_factor(vx, vy, vz, speed_limit) -> float:
+    """ TODO: not used """
     speed_ratio = math.sqrt(vx ** 2 + vy ** 2 + vz ** 2) / speed_limit
     if speed_ratio > 1.:
         speed_ratio = 1.
@@ -73,10 +80,13 @@ def particle(engine,
              color_temp: bool = False,
              vx=None, vy=None, vz=None, speed_limit=None
              ) -> Material:
-    mat = bpy.data.materials.new(f"Particle{particleid}")
-    # TODO: not used
-    if color_temp == 'temperature':
-        factor = _get_speed_factor(vx, vy, vz, speed_limit)
+    """ Particle material. """
+    mat = bpy.data.materials.new(f"Particle{particle_id}")
+    
+    # FIXME(tpvasconcelos): Use different colors within a particle system
+    # if color_temp == 'temperature':
+    #     factor = _get_speed_factor(vx, vy, vz, speed_limit)
+    
     if random_color:
         color = _get_randomcolor()
     if engine == 'BLENDER_RENDER':
@@ -85,6 +95,8 @@ def particle(engine,
 
 
 def _cycles_particle(mat: Material, color: Tuple4) -> Material:
+    """ Particle material (cycles engine). """
+    
     # Nodes
     mat.use_nodes = True
     nodes = mat.node_tree.nodes
@@ -118,6 +130,7 @@ def _cycles_particle(mat: Material, color: Tuple4) -> Material:
 
 
 def _render_particle(mat: Material, color: Tuple3) -> Material:
+    """ Particle material (render engine). """
     mat.diffuse_color = color
     mat.diffuse_intensity = 1
     mat.specular_intensity = 0.25
@@ -132,6 +145,7 @@ def _render_particle(mat: Material, color: Tuple3) -> Material:
 
 
 def glasswall(engine) -> Material:
+    """ Glass wall material. """
     mat = bpy.data.materials.new("GlassWall")
     color = (1, 1, 1, 1)
     ior = 1.25
@@ -141,6 +155,7 @@ def glasswall(engine) -> Material:
 
 
 def _cycles_glasswall(mat: Material, color: Tuple4, ior: float) -> Material:
+    """ Glass wall material (cycles engine). """
     # Nodes
     mat.use_nodes = True
     nodes = mat.node_tree.nodes
@@ -159,6 +174,8 @@ def _cycles_glasswall(mat: Material, color: Tuple4, ior: float) -> Material:
 
 
 def _render_glasswall(mat: Material, color: Tuple4, ior: float) -> Material:
+    """ Glass wall material (render engine). """
+    
     # Diffuse
     mat.diffuse_color = color
     mat.diffuse_intensity = 1.
@@ -189,6 +206,7 @@ def _render_glasswall(mat: Material, color: Tuple4, ior: float) -> Material:
 
 
 def floor(engine) -> Material:
+    """ Floor material (cycles engine). """
     mat = bpy.data.materials.new("Floor")
     if engine == 'BLENDER_RENDER':
         color = (0.6, 0.9, 1, 1)
@@ -198,6 +216,8 @@ def floor(engine) -> Material:
 
 
 def _cycles_floor(mat: Material, color: Tuple4) -> Material:
+    """ Floor material (cycles engine). """
+    
     # Nodes
     mat.use_nodes = True
     nodes = mat.node_tree.nodes
@@ -225,6 +245,7 @@ def _cycles_floor(mat: Material, color: Tuple4) -> Material:
 
 
 def _render_floor(mat: Material, color: Tuple3) -> Material:
+    """ Floor material (render engine). """
     mat.diffuse_color = color
     mat.diffuse_intensity = 1
     mat.specular_intensity = 1
@@ -240,13 +261,13 @@ def _render_floor(mat: Material, color: Tuple3) -> Material:
 # ======================================================================
 
 def light() -> Material:
-    """ Cycles material (CYCLES engine only!). """
+    """ Light material (cycles engine only!!). """
     color = (0.9, 0.9, 0.95, 1)
     return _cycles_light(color)
 
 
 def _cycles_light(color: Tuple4) -> Material:
-    """ Cycles light material. """
+    """ Light material (cycles engine). """
     mat = bpy.data.materials.new('BackLight')
     # NODES
     mat.use_nodes = True

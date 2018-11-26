@@ -1,5 +1,11 @@
 #!/usr/local/bin/python
 # coding: utf-8
+
+"""
+Dataset-names and useful paths used in the file-management.
+
+"""
+
 import os
 
 DIR_SIMFILES = f'{os.getcwd()}/simfiles'

@@ -1,5 +1,11 @@
 #!/usr/local/bin/python
 # coding: utf-8
+
+"""
+Useful constants for mdsea
+
+"""
+
 import numpy
 
 # default (numpy) datatype

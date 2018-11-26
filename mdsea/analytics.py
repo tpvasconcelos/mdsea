@@ -48,7 +48,9 @@ def make_mp4(fname: str,
         log.info("ffmpeg took %ss to run", round(time() - t_start, 2))
 
 
-class Analyser:
+class Analyser(object):
+    """ TODO: docstring """
+    
     def __init__(self, sm: SysManager) -> None:
         self.sm = sm
         
@@ -75,6 +77,8 @@ class Analyser:
 
 
 class Vis(Analyser):
+    """ TODO: docstring """
+
     def __init__(self, sm: SysManager, frame_step: int = 1) -> None:
         super(Vis, self).__init__(sm)
         
