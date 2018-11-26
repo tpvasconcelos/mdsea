@@ -1,7 +1,16 @@
 #!/usr/local/bin/python
 # coding: utf-8
+
+"""
+This is a list of optimized functions with the goal of speeding up the
+simulation. Some of these functions are based on existing ones from
+packages like numpy and scipy, but since we know the input of these
+functions we can skip all the checks and extra steps performed by
+such packages.
+
+"""
+
 import numpy as np
-# noinspection PyProtectedMember
 from scipy.spatial.distance import _distance_wrap
 
 from mdsea.constants import DTYPE
@@ -18,8 +27,8 @@ def cdist_(x: np.ndarray) -> np.ndarray:
 
     Equivalent to (but without all the checks):
 
-        >>> from scipy.spatial.distance import cdist
-        >>> cdist(x, x)
+    >>> from scipy.spatial.distance import cdist
+    >>> cdist(x, x)
 
     """
     m = x.shape[0]
@@ -37,4 +46,5 @@ def flipid(n):
 
 
 def norm(x, axis=None):
+    """ Returns the norm of x. """
     return np.sqrt(np.add.reduce(x ** 2, axis=axis, dtype=DTYPE), dtype=DTYPE)

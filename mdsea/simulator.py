@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 log.addHandler(loghandler)
 
 
-class _BaseSimulator:
+class _BaseSimulator(object):
     def __init__(self, sm: SysManager) -> None:
         
         self.sm = sm
@@ -29,7 +29,7 @@ class _BaseSimulator:
         self.ndnp_zeroes = np.zeros((self.sm.NDIM, self.sm.NUM_PARTICLES),
                                     dtype=DTYPE)
         
-        # Updated everytime self.get_dists is called
+        # Updated every time self.get_dists is called
         self.distances = None
         
         # Mean kinetic and potential energies
@@ -53,7 +53,7 @@ class _BaseSimulator:
         if not self.sm.PBC:
             self.apply_boundaryconditions = self.hard_boundaries
         
-        # Flipped idententy matrix
+        # Flipped identity matrix
         self._FLIPID = quicker.flipid(self.sm.NDIM)
         # "Damping factor"
         self._e = self.sm.RESTITUTION_COEFF + (1 - self.sm.RESTITUTION_COEFF)
@@ -77,7 +77,7 @@ class _BaseSimulator:
         # ---
         self.colliding_pairs = list()
         
-        # Defined in ._init_pais()
+        # Defined in ._init_pairs()
         self.true_matrix = None
         self.pairs = None
         self.p0 = None
@@ -85,7 +85,7 @@ class _BaseSimulator:
     
     def _init_pairs(self):
         # Generate all possible combinations of particle pairs.
-        # It is staright forward to use itertools for this.
+        # It is straight forward to use itertools for this.
         # Then, we transform the itertools.combinations
         # object into a numpy ndarray. Not perfect...
         # numpy.fromiter is way too slow for large
@@ -154,7 +154,7 @@ class _BaseSimulator:
     # ==================================================================
     
     def apply_special(self) -> None:
-        """ Special events... """
+        """ Handle special events. """
         if self.sm.ISOTHERMAL:
             self._quench(self.temp)
         if self.step in self.sm.QUENCH_STEP:
@@ -225,7 +225,7 @@ class _BaseSimulator:
         dr_vecs = r_vecs[self.p1] - r_vecs[self.p0]
         
         # If these vectors are bigger than half the boundary
-        # lenght, reflect the relative distance to obey
+        # length, reflect the relative distance to obey
         # boundary conditions. (See the docstring)
         if self.sm.PBC:
             dr_vecs -= np.rint(dr_vecs / self.sm.LEN_BOX) * self.sm.LEN_BOX
@@ -492,17 +492,17 @@ class ContinuousPotentialSolver(_BaseSimulator):
         
         super(ContinuousPotentialSolver, self).__init__(sm)
         
-        algrthms_tbl = {
+        algorithms_tbl = {
             'verlet': self.algorithm_verlet,
             'old': self.algorithm_old,
             'simple': self.algorithm_simple,
             }
         
         try:
-            self.apply_algorithm = algrthms_tbl[algorithm]
+            self.apply_algorithm = algorithms_tbl[algorithm]
         except KeyError:
             msg = f"Algorithm '{algorithm}' not found " \
-                f"in {tuple(algrthms_tbl.keys())}"
+                f"in {tuple(algorithms_tbl.keys())}"
             raise KeyError(msg)
     
     def algorithm_old(self):
