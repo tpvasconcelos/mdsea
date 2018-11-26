@@ -24,7 +24,6 @@ script
 git clone https://github.com/TPVasconcelos/mdsea.git
 cd mdsea
 python3 setup.py install
-pip3 install -r requirements.txt
 ```
 
 
