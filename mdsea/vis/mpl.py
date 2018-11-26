@@ -50,7 +50,7 @@ class MPL(Vis):
             self.r_coords = np.stack([self.r_coords[:, 0], zeroes_], axis=1)
             self.r_vecs = np.stack([self.r_coords[:, 0], zeroes_], axis=-1)
         
-        # TODO: @property doesn't work!!
+        # FIXME(tpvasconcelos) dark_theme @property doesn't work!!
         self._dark_theme = False
     
     @property
@@ -158,7 +158,7 @@ class Animation(MPL):
         super(Animation, self).__init__(sm, frame_step)
         
         # ==============================================================
-        # ---  Parce kwarguments
+        # ---  Parse kwargs
         # ==============================================================
         
         self.fig, self.ax = plt.subplots(figsize=figsize)
@@ -253,14 +253,13 @@ class Animation(MPL):
         self._plt_particles_circles(step)
     
     def _plt_well(self, step: int) -> None:
-        """
-        # TODO: R_SQUAREWELL
-        x, y = self.x[step], self.y[step]
-        for x, y in zip(x, y):
-            circle_settings = dict(xy=(x, y), facecolor='none', lw=1,
-                                   radius=R_SQUAREWELL * self.sm.RADIUS_PARTICLE)
-            self.ax.add_patch(patches.Circle(**circle_settings))
-        """
+        """ FIXME(tpvasconcelos) not currently working for step potentials"""
+        # x, y = self.x[step], self.y[step]
+        # for x, y in zip(x, y):
+        #     circle_settings = dict(
+        #         xy=(x, y), facecolor='none', lw=1,
+        #         radius=R_SQUAREWELL * self.sm.RADIUS_PARTICLE)
+        #     self.ax.add_patch(patches.Circle(**circle_settings))
         pass
     
     def _rm_particles(self) -> None:
@@ -279,7 +278,8 @@ class Animation(MPL):
         max_ = self.sm.LEN_BOX + 0.1
         self.ax.axis(xmin=min_, xmax=max_, ymin=min_, ymax=max_)
         self.ax.set_aspect('equal')
-        self.ax.set_axis_off()  # remove axis0
+        # remove axis0
+        self.ax.set_axis_off()
     
     def _update_slider(self, step: np.float64) -> None:
         self._rm_particles()
@@ -288,7 +288,8 @@ class Animation(MPL):
         self._plt_particles(step)
         if self.draw_wells:
             self._plt_well(step)
-        self.fig.canvas.draw_idle()  # update canvas
+        # update canvas
+        self.fig.canvas.draw_idle()
     
     def _update_animloop(self, step):
         self._plt_particles_scatter(step)
@@ -299,9 +300,9 @@ class Animation(MPL):
         self._plt_box()
         self._set_preferences()
         if self.colorspeed:
-            self._clrs_init()
+            self._colors_init()
     
-    def _clrs_init(self, cmap: Optional[Colormap] = None):
+    def _colors_init(self, cmap: Optional[Colormap] = None):
         if cmap is None:
             # DIVERGING -> ['coolwarm', 'RdBu_r', 'jet']
             # SEQUENTIAL -> ['gist_heat', 'autumn', 'hot']
@@ -382,7 +383,7 @@ class Animation(MPL):
         
         for step in range(0, self.sm.STEPS, self.frame_step):
             
-            # Remove and redraw/replot particles
+            # Remove and redraw/re-plot particles
             self._rm_particles()
             self._plt_particles(step)
             
