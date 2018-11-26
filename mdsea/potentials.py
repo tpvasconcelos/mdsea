@@ -72,7 +72,7 @@ def ff_ideal(r, **kwargs):
 # ----------------------------------------------------------------------
 
 
-class Potential:
+class Potential(object):
     def __init__(self,
                  force: Optional[Callable],
                  potential: Optional[Callable],
@@ -132,9 +132,11 @@ class Potential:
     # ==================================================================
     
     def potential(self, r):
+        """ Evaluate and return the potential function at r. """
         return self.pf(r, **self.kwargs)
     
     def force(self, r):
+        """ Evaluate and return the force function at r. """
         return self.ff(r, **self.kwargs)
     
     def potminimum(self, xtol: float = 1e-8):

@@ -8,11 +8,12 @@ Blender objetcs.
 
 import logging
 import math
-from typing import Iterable, List, Optional, Tuple, Union
+from typing import Iterable, List, Optional, Union
 
 import bpy
 
 from mdsea import loghandler
+from mdsea.helpers import Tuple3
 from mdsea.vis import blender_materials as materials
 
 log = logging.getLogger(__name__)
@@ -20,7 +21,6 @@ log.addHandler(loghandler)
 
 Object = bpy.types.Object
 Material = bpy.types.Material
-Tuple3 = Tuple[float, float, float]
 
 
 def light(engine: str,

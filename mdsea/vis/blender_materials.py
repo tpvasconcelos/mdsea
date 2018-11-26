@@ -9,18 +9,16 @@ Blender materials.
 import logging
 import math
 import random
-from typing import Tuple
 
 import bpy
 
 from mdsea import loghandler
+from mdsea.helpers import Tuple3, Tuple4
 
 log = logging.getLogger(__name__)
 log.addHandler(loghandler)
 
 Material = bpy.types.Material
-Tuple3 = Tuple[float, float, float]
-Tuple4 = Tuple[float, float, float, float]
 
 
 # ======================================================================

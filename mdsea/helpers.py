@@ -4,7 +4,7 @@ import logging
 import math
 import statistics as stats
 from time import time
-from typing import Any, Callable, Optional, Sequence, Tuple
+from typing import Any, Callable, Optional, Sequence, Tuple, Union
 
 from scipy.special import gamma
 
@@ -13,17 +13,23 @@ from mdsea import loghandler
 log = logging.getLogger(__name__)
 log.addHandler(loghandler)
 
+# Useful shortcuts for typechecking rgb and rgba tuples
+Tuple3 = Tuple[float, float, float]
+Tuple4 = Tuple[float, float, float, float]
+
 
 ##########
 #  USED  #
 ##########
 
 def nsphere_volume(n, r):
-    return (math.pi ** (n / 2)) * (r ** n) / gamma(n / 2 + 1)
+    """ Return the volume of an n-sphere with radius r. """
+    return math.pi ** (n / 2) * (r ** n) / gamma(n / 2 + 1)
 
 
-def rgb2unit(rgb: tuple) -> tuple:
-    assert len(rgb) in (3, 4)
+def rgb2unit(rgb: Union[Tuple3, Tuple4]) -> tuple:
+    """ Normalize rgb tuples (0 to 255) to unit (0 to 1). """
+    assert len(rgb) in (3, 4)  # TODO(tpvasconcelos) remove this line
     if len(rgb) == 3:
         return tuple(c / 255 for c in rgb)
     return tuple(c / 255 if i < 3 else c for i, c in enumerate(rgb))
@@ -46,12 +52,12 @@ def check_type(name: str, val: Any, target_types: Tuple[type, ...]) -> None:
 
 
 def check_size(names: Tuple[str, ...], vals: Tuple[Sequence, ...]) -> None:
-    """ Check maching sizes. """
+    """ Check matching sizes. """
     l1 = len(vals[0])
     for v in vals:
         if len(v) != l1:
             msg = "The following variables all " \
-                f"need to be the same lenght: {names}"
+                f"need to be the same length: {names}"
             raise ValueError(msg)
 
 
@@ -70,14 +76,15 @@ def get_dt(radius: float, mean_speed: float,
     return drpf * radius / mean_speed
 
 
-# def get_memory() -> dict:
-#     """ Returns full memory info. """
-#     import psutil
-#     proc = psutil.Process(os.getpid())
-#     return proc.memory_info()
+def get_memory() -> dict:
+    """ Returns full memory info. """
+    import psutil
+    import os
+    proc = psutil.Process(os.getpid())
+    return proc.memory_info()
 
 
-class ProgressBar:
+class ProgressBar(object):
     
     def __init__(self, name: str, stop: int,
                  loggername: str = __name__,
@@ -88,7 +95,7 @@ class ProgressBar:
         self.step = step
         self.log = logging.getLogger(loggername)
         
-        self.prefix = f"ProgresBar ({self.name}):"
+        self.prefix = f"ProgressBar ({self.name}):"
         
         self.progress = 0
         self.timespercycle = []

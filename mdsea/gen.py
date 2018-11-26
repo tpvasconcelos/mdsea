@@ -2,24 +2,13 @@
 # coding: utf-8
 import logging
 import math
-from typing import TYPE_CHECKING
 
 import numpy as np
 from scipy import special
 from scipy.interpolate import interp1d
 
-from mdsea.constants import DTYPE
-
-if TYPE_CHECKING:
-    ############################
-    #  Fix for cyclic imports  #
-    ############################
-    # Note that the 'SysManager' type annotation is turned into
-    # a string. This is needed since SysManager won't be
-    # available at runtime when TYPE_CHECKING == False
-    pass
-
 from mdsea import loghandler
+from mdsea.constants import DTYPE
 
 log = logging.getLogger(__name__)
 log.addHandler(loghandler)
@@ -37,7 +26,7 @@ def mb(mass, temp, k_boltzmann) -> np.ndarray:
     term1 = mass / (2 * math.pi * k_boltzmann * temp)
     term2 = 4 * math.pi * MONTECARLO_SPEEDRANGE ** 2
     term3 = -mass * MONTECARLO_SPEEDRANGE ** 2 / (2 * k_boltzmann * temp)
-    return (term1 ** 1.5) * term2 * np.exp(term3)
+    return term1 ** 1.5 * term2 * np.exp(term3)
 
 
 def mb_cdf(mass, temp, k_boltzmann) -> np.ndarray:
@@ -58,13 +47,15 @@ def mb_cdf(mass, temp, k_boltzmann) -> np.ndarray:
 # ======================================================================
 
 
-class _Gen:
+class _Gen(object):
+    """ TODO: docstring """
+    
     def __init__(self, nparticles: int, ndim: int) -> None:
         self.nparticles = nparticles
         self.ndim = ndim
         
         # This will change to True once a
-        # 'generator' is susscefully called
+        # 'generator' is successfully called
         self.generated = False
         
         # This will be updated by a 'generator'
@@ -77,7 +68,7 @@ class _Gen:
     def _get(self) -> np.ndarray:
         """
         Returns numpy ndarray of coordinates
-        in their dimentional components (x1, x2, x3, ...).
+        in their dimensional components (x1, x2, x3, ...).
 
         """
         if not self.generated:
@@ -86,6 +77,8 @@ class _Gen:
 
 
 class VelGen(_Gen):
+    """ TODO: docstring """
+    
     def __init__(self, nparticles: int, ndim: int) -> None:
         
         super(VelGen, self).__init__(nparticles, ndim)
@@ -115,7 +108,7 @@ class VelGen(_Gen):
     # ==================================================================
     
     def mb(self, mass, temp, k_boltzmann) -> np.ndarray:
-        """ Generate Maxwell-Boltzmann velocites. """
+        """ Generate Maxwell-Boltzmann velocities. """
         
         # Special case for T=0  ---
         if temp == 0:
@@ -146,6 +139,8 @@ class VelGen(_Gen):
 
 
 class PosGen(_Gen):
+    """ TODO: docstring """
+    
     def __init__(self, nparticles: int, ndim: int, boxlen: float) -> None:
         
         super(PosGen, self).__init__(nparticles, ndim)
@@ -164,6 +159,7 @@ class PosGen(_Gen):
     # ==================================================================
     
     def simplecubic(self) -> np.ndarray:
+        """ Return simple cubic coordinates. """
         # particles per row  ---
         ppr = round(self.nparticles ** (1 / self.ndim))
         assert self.nparticles == ppr ** self.ndim
@@ -178,6 +174,7 @@ class PosGen(_Gen):
         return self._get()
     
     def random(self, pradius) -> np.ndarray:
+        """ Return random coordinates. """
         # Usable box span  ---
         us = self.boxlen - 2 * pradius
         # Distribute coordinates randomly  ---

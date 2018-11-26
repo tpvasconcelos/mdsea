@@ -8,7 +8,7 @@ Blender animation.
 
 import logging
 import math
-from typing import Optional, Tuple
+from typing import Optional
 
 import bpy
 import numpy as np
@@ -16,6 +16,7 @@ import numpy as np
 from mdsea import loghandler
 from mdsea.analytics import Vis
 from mdsea.core import SysManager
+from mdsea.helpers import Tuple3
 from mdsea.vis import blender_materials as b_materials, \
     blender_objetcs as b_objects
 
@@ -23,8 +24,6 @@ log = logging.getLogger(__name__)
 log.addHandler(loghandler)
 
 Material = bpy.types.Material
-Tuple3 = Tuple[float, float, float]
-Tuple4 = Tuple[float, float, float, float]
 
 
 class BlenderAnimation(Vis):
