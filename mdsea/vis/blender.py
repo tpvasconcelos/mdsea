@@ -35,15 +35,15 @@ class BlenderAnimation(Vis):
         super(BlenderAnimation, self).__init__(sm, frame_step)
         
         # ==============================================================
-        # ---  Parce user arguments/settings
+        # ---  Parse user arguments/settings
         # ==============================================================
         
-        # Blender particle limit per emiter: 10,000,000
+        # Blender particle limit per emitter: 10,000,000
         max_particles = 10000000
         if self.sm.NUM_PARTICLES > max_particles:
             raise ValueError(
-                f"Blender only suports {max_particles} particles per emiter. "
-                f"You are requesting {self.sm.NUM_PARTICLES} particles.")
+                f"Blender only supports {max_particles} particles per emitter."
+                f" You are requesting {self.sm.NUM_PARTICLES} particles.")
         
         # ==============================================================
         # ---  Other variables
@@ -94,6 +94,16 @@ class BlenderAnimation(Vis):
     # ==================================================================
     # ---  User/Public Methods
     # ==================================================================
+    
+    @property
+    def engine(self):
+        """ Blender rendering engine. """
+        return self.scene.render.engine
+    
+    @engine.setter
+    def engine(self, engine: str):
+        """ Set the rendering engine. """
+        self.scene.render.engine = engine
     
     def quick_setup(self, engine: Optional[str] = None) -> None:
         """ Miscellaneous setups and preferences """
@@ -153,21 +163,16 @@ class BlenderAnimation(Vis):
         elif self.engine == 'BLENDER_RENDER':
             self.scene.render.use_raytrace = render_raytrace
     
-    # TODO: not used
-    @staticmethod
-    def update_particle_color(pid, frame, vx, vy, vz,
-                              speed_limit) -> None:
-        factor = _get_speed_factor(vx, vy, vz, speed_limit)
-        mat = bpy.data.materials[f"Particle{pid}"]
-        mat.node_tree.nodes["Mix Shader"].inputs['Fac'].default_value = factor
-        mat.node_tree.nodes["Mix Shader"].inputs['Fac'].keyframe_insert(
-            "default_value", frame=frame)
+    def update_particlecolor(self) -> None:
+        """ TODO: find a solution for this. """
+        pass
     
     def create_ref_particle(self,
                             mat: Optional[Material] = None) -> None:
         """ Create a reference particle for the particle system. """
-        # Create a new "UV Sphere" object
-        loc = -1000 * self.sm.LEN_BOX  # in a galaxy far far away...
+        # Create a new UV Sphere object
+        # (in a galaxy far far away)
+        loc = -1000 * self.sm.LEN_BOX
         bpy.ops.mesh.primitive_uv_sphere_add(location=(loc, loc, loc))
         # Save particle object in class scope
         self.ref_particle = bpy.context.object
@@ -177,7 +182,7 @@ class BlenderAnimation(Vis):
         if mat is None:
             mat = b_materials.particle(self.engine)
         b_materials.set_material(self.ref_particle, mat)
-        # Set sphere object dimentions
+        # Set sphere object dimensions
         diameter = 2 * self.sm.RADIUS_PARTICLE
         self.ref_particle.dimensions = (diameter, diameter, diameter)
     
@@ -204,43 +209,43 @@ class BlenderAnimation(Vis):
         # SETTINGS #
         ############
         
-        psys_settings = bpy.data.particles[0]
+        settings = bpy.data.particles[0]
         
         # Emission
-        psys_settings.count = self.sm.NUM_PARTICLES
-        psys_settings.frame_start = 0
-        psys_settings.frame_end = 0
-        psys_settings.lifetime = self.num_frames + 1
+        settings.count = self.sm.NUM_PARTICLES
+        settings.frame_start = 0
+        settings.frame_end = 0
+        settings.lifetime = self.num_frames + 1
         
         # Velocity
-        psys_settings.normal_factor = 0
+        settings.normal_factor = 0
         
         # Physics
-        psys_settings.timestep = 0
+        settings.timestep = 0
         
         # Render
-        psys_settings.render_type = "OBJECT"
-        psys_settings.particle_size = 1
-        psys_settings.use_scale_dupli = True
-        psys_settings.use_render_emitter = False
-        psys_settings.dupli_object = self.ref_particle
+        settings.render_type = "OBJECT"
+        settings.particle_size = 1
+        settings.use_scale_dupli = True
+        settings.use_render_emitter = False
+        settings.dupli_object = self.ref_particle
         
         # Field Weights (set all to zero)
-        psys_settings.effector_weights.gravity = 0
-        psys_settings.effector_weights.all = 0
-        psys_settings.effector_weights.force = 0
-        psys_settings.effector_weights.vortex = 0
-        psys_settings.effector_weights.magnetic = 0
-        psys_settings.effector_weights.wind = 0
-        psys_settings.effector_weights.curve_guide = 0
-        psys_settings.effector_weights.texture = 0
-        psys_settings.effector_weights.smokeflow = 0
-        psys_settings.effector_weights.harmonic = 0
-        psys_settings.effector_weights.charge = 0
-        psys_settings.effector_weights.lennardjones = 0
-        psys_settings.effector_weights.turbulence = 0
-        psys_settings.effector_weights.drag = 0
-        psys_settings.effector_weights.boid = 0
+        settings.effector_weights.gravity = 0
+        settings.effector_weights.all = 0
+        settings.effector_weights.force = 0
+        settings.effector_weights.vortex = 0
+        settings.effector_weights.magnetic = 0
+        settings.effector_weights.wind = 0
+        settings.effector_weights.curve_guide = 0
+        settings.effector_weights.texture = 0
+        settings.effector_weights.smokeflow = 0
+        settings.effector_weights.harmonic = 0
+        settings.effector_weights.charge = 0
+        settings.effector_weights.lennardjones = 0
+        settings.effector_weights.turbulence = 0
+        settings.effector_weights.drag = 0
+        settings.effector_weights.boid = 0
         
         # We need to update the scene to make
         # Blender aware of these changes.
@@ -269,9 +274,7 @@ class BlenderAnimation(Vis):
         # Animate particles step-by-step
         for self.step in np.arange(0, self.sm.STEPS, self.frame_step):
             
-            if self.step == 0:
-                pass
-            elif self.step == self.sm.STEPS:
+            if self.step == self.sm.STEPS:
                 break
             
             # Start by setting the scene frame
@@ -296,7 +299,7 @@ class BlenderAnimation(Vis):
         # Save .blend file again
         self.save()
         
-        # TODO: Use disk cache (not working...?!)
+        # FIXME(tpvasconcelos) Disk cache not working...?!
         # self.particle_sys.particle_systems[0] \
         #     .point_cache.use_disk_cache = True
         
@@ -324,16 +327,6 @@ class BlenderAnimation(Vis):
         """ Update scene. """
         self.scene.update()
     
-    @property
-    def engine(self):
-        """ Blender rendering engine. """
-        return self.scene.render.engine
-    
-    @engine.setter
-    def engine(self, engine: str):
-        """ Set the rendering engine. """
-        self.scene.render.engine = engine
-    
     def set_framelim(self, start: int = 1,
                      end: Optional[int] = None) -> None:
         """ Set the frame limits ('start frame' and 'end frame'). """
@@ -348,7 +341,7 @@ class BlenderAnimation(Vis):
                      loc: Optional[Tuple3] = None,
                      rot: Optional[Tuple3] = None,
                      clip_end: Optional[float] = None,
-                     focal_lenght: float = 45,
+                     focal_length: float = 45,
                      sensor_width: float = 32) -> None:
         """ Setup camera. """
         if loc is None:
@@ -363,7 +356,7 @@ class BlenderAnimation(Vis):
         camera = bpy.data.objects["Camera"]
         camera.location = loc
         camera.rotation_euler = rot
-        bpy.data.cameras["Camera"].lens = focal_lenght
+        bpy.data.cameras["Camera"].lens = focal_length
         bpy.data.cameras["Camera"].clip_end = clip_end
         bpy.data.cameras["Camera"].sensor_width = sensor_width
     

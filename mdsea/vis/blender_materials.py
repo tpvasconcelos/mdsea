@@ -43,30 +43,31 @@ def _get_speed_factor(vx, vy, vz, speed_limit) -> float:
 
 
 def _get_randomcolor() -> Tuple4:
-    rgbis_high = [0.7, 0.8, 0.9, 1., 1.]
-    rgbis_low = [0.1, 0.2, 0.3, 0.4]
+    """ Get a random color. """
+    rgb_high = [0.7, 0.8, 0.9, 1., 1.]
+    rgb_low = [0.1, 0.2, 0.3, 0.4]
     c_main3 = [
-        (random.choice(rgbis_high), 0, 0, 1),
-        (0, random.choice(rgbis_high), 0, 1),
-        (0, 0, random.choice(rgbis_high), 1)
+        (random.choice(rgb_high), 0, 0, 1),
+        (0, random.choice(rgb_high), 0, 1),
+        (0, 0, random.choice(rgb_high), 1)
         ]
     c_hh_comb = [
-        (random.choice(rgbis_high), random.choice(rgbis_high), 0, 1),
-        (random.choice(rgbis_high), 0, random.choice(rgbis_high), 1),
-        (0, random.choice(rgbis_high), random.choice(rgbis_high), 1)
+        (random.choice(rgb_high), random.choice(rgb_high), 0, 1),
+        (random.choice(rgb_high), 0, random.choice(rgb_high), 1),
+        (0, random.choice(rgb_high), random.choice(rgb_high), 1)
         ]
     c_hl_comb = [
-        (random.choice(rgbis_high), random.choice(rgbis_low), 0, 1),
-        (random.choice(rgbis_high), 0, random.choice(rgbis_low), 1),
-        (0, random.choice(rgbis_high), random.choice(rgbis_low), 1)
+        (random.choice(rgb_high), random.choice(rgb_low), 0, 1),
+        (random.choice(rgb_high), 0, random.choice(rgb_low), 1),
+        (0, random.choice(rgb_high), random.choice(rgb_low), 1)
         ]
     c_lh_comb = [
-        (random.choice(rgbis_low), random.choice(rgbis_high), 0, 1),
-        (random.choice(rgbis_low), 0, random.choice(rgbis_high), 1),
-        (0, random.choice(rgbis_low), random.choice(rgbis_high), 1)
+        (random.choice(rgb_low), random.choice(rgb_high), 0, 1),
+        (random.choice(rgb_low), 0, random.choice(rgb_high), 1),
+        (0, random.choice(rgb_low), random.choice(rgb_high), 1)
         ]
-    pallete = [*c_main3, *c_hh_comb, *c_hl_comb, *c_lh_comb]
-    return random.choice(pallete)
+    palette = [*c_main3, *c_hh_comb, *c_hl_comb, *c_lh_comb]
+    return random.choice(palette)
 
 
 # ======================================================================
@@ -74,7 +75,7 @@ def _get_randomcolor() -> Tuple4:
 # ======================================================================
 
 def particle(engine,
-             particleid="",
+             particle_id="",
              color: Tuple4 = (1, 0.4, 0.1, 1),
              random_color: bool = False,
              color_temp: bool = False,
@@ -89,6 +90,7 @@ def particle(engine,
     
     if random_color:
         color = _get_randomcolor()
+    
     if engine == 'BLENDER_RENDER':
         return _render_particle(mat, color[:-1])
     return _cycles_particle(mat, color)
