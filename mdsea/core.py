@@ -22,11 +22,14 @@ DIR_SIMFILES = f"{os.getcwd()}/simfiles"
 
 
 def _gen_newid() -> str:
+    """ TODO: docstring """
     from time import time
     return str(time()).replace('.', '')
 
 
-class SysManager:
+class SysManager(object):
+    """ TODO: docstring """
+    
     def __init__(self,
                  # SysManager.load() and SysManager.new()
                  # take care of these two arguments:
@@ -55,7 +58,7 @@ class SysManager:
                  pot: Potential = Potential.ideal(),
                  ) -> None:
         """
-        TODO: doc string
+        TODO: docstring
         
         The file manager, manages:
 
@@ -265,7 +268,7 @@ class SysManager:
     
     def _open_datafile(self, mode: str = 'a') -> h5py.File:
         """ Open data file. """
-        # TODO: Do we need to log this?
+        # Uncomment for testing only!
         # log.debug("Opening data file in '%s' mode: %s", mode, self.data_path)
         self.dfile = h5py.File(self.data_path, mode=mode)
         return self.dfile
@@ -274,7 +277,7 @@ class SysManager:
         """ Close data file. """
         try:
             self.dfile.close()
-            # TODO: Do we need to log this?
+            # Uncomment for testing only!
             # log.debug("Data file closed: %s", self.data_path)
         except AttributeError:
             log.warning("You tried to close a data file "
@@ -314,7 +317,7 @@ class SysManager:
             simid: Optional[str] = None,
             initfilesys: bool = True,
             **kwargs) -> 'SysManager':
-        """ TODO: missing doc string """
+        """ Create a new System Manager instance. """
         if simid is None:
             simid = _gen_newid()
         path_sim = cfm.SIM_PATH.format(simid)
@@ -328,7 +331,7 @@ class SysManager:
     
     @classmethod
     def load(cls, simid: str) -> 'SysManager':
-        """ TODO: missing doc string """
+        """ Load an excisting simulation System Manager. """
         path_sim = cfm.SIM_PATH.format(simid)
         path_settings = cfm.SETTINGS_PATH.format(simid)
         paths_exist = (os.path.exists(path_sim), os.path.exists(path_settings))
@@ -354,8 +357,8 @@ class SysManager:
             records = {'sim ID': self.SIM_ID,
                        'new simulation': self.new_sim}
             msg = f"You were about to initialize an existing simulation, " \
-                  f"which is not allowed. " \
-                  f"Try loading this simulation: {records}"
+                f"which is not allowed. " \
+                f"Try loading this simulation: {records}"
             raise SystemExit(msg)
         
         # Set-up the simulation directory

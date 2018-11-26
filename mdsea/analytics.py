@@ -17,10 +17,7 @@ def make_mp4(fname: str,
              stills_dir: str,
              fps: float,
              timeit: bool = False) -> None:
-    """
-    TODO: missing doc string
-    
-    """
+    """ TODO: doc string """
     
     if timeit:
         from time import time

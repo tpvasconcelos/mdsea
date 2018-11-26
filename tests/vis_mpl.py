@@ -9,8 +9,6 @@ sm = md.SysManager.load(simid="_mdsea_testsimulation")
 
 anim = Animation(sm, frame_step=FRAME_STEP)
 
-# anim.dark_theme = True
-
 # anim.plt_slider(scatter=True, colorspeed=True)
 anim.anim(scatter=False, colorspeed=True)
 
