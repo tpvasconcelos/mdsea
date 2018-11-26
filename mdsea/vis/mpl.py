@@ -1,5 +1,11 @@
 #!/usr/local/bin/python
 # coding: utf-8
+
+"""
+matplotlib visualizations and animations.
+
+"""
+
 import matplotlib
 
 # TODO: review backend handling. What if someone doesn't have Qt5...?
@@ -25,6 +31,7 @@ log.addHandler(loghandler)
 
 def speed2color(cmap: Colormap, speed: float, speed_limit: float,
                 alpha: bool = True) -> tuple:
+    """ Transform a speed into a rgb (or rgba) color. """
     # TODO: vectorize this s.t. 'speed' can be an array
     # speed_ratio = round(cmap.N * speed / speed_limit)
     speed_ratio = cmap.N - int(cmap.N * speed / speed_limit)
@@ -38,6 +45,8 @@ def speed2color(cmap: Colormap, speed: float, speed_limit: float,
 
 
 class MPL(Vis):
+    """ matplotlib visualizations. """
+    
     def __init__(self,
                  sm: SysManager,
                  frame_step: int = 1
@@ -55,6 +64,7 @@ class MPL(Vis):
     
     @property
     def dark_theme(self):
+        """ Set mpl theme. """
         return self._dark_theme
     
     @dark_theme.setter
@@ -71,6 +81,7 @@ class MPL(Vis):
                      label_pe: str = 'Potential Energy',
                      label_ke: str = 'Kinetic Energy',
                      label_te: str = 'Total Energy') -> None:
+        """ Plot energies over time. """
         plt.plot(self.mean_pot_energies, lw=lw, label=label_pe)
         plt.plot(self.mean_kin_energies, lw=lw, label=label_ke)
         plt.plot(self.total_energy, lw=lw, label=label_te)
@@ -82,6 +93,7 @@ class MPL(Vis):
                  lw: float = 2,
                  fontsize: float = 18,
                  label: str = r'$T^*$') -> None:
+        """ Plot temperature over time. """
         plt.plot(self.temp, lw=lw, label=label)
         plt.legend(loc='best', prop={'size': fontsize})
         plt.grid()
@@ -90,7 +102,7 @@ class MPL(Vis):
     def plt_sd(self,
                fontsize: float = 18,
                label: str = r'$Speed Distribution$') -> None:
-        """ Speed distribution plot. """
+        """ Plot the speed distribution. """
         fig = plt.figure()
         ax = fig.add_subplot(111)
         # generate histogram of velocities
@@ -107,7 +119,7 @@ class MPL(Vis):
                 lw: float = 2,
                 fontsize: float = 18,
                 label: str = r'$g(r)$') -> None:
-        """ Radial Distribution Function (RDF) plot. """
+        """ Plot the Radial Distribution Function (RDF). """
         plt.plot(self.temp, lw=lw, label=label)
         plt.legend(loc='best', prop={'size': fontsize})
         plt.grid()
@@ -123,6 +135,8 @@ class MPL(Vis):
 
 
 class Animation(MPL):
+    """ matplotlib animation. """
+    
     def __init__(self,
                  # MPL kwargs:
                  sm: SysManager,
@@ -145,9 +159,6 @@ class Animation(MPL):
                             large number of particles and/or number of steps)
                       - [+] Particle radius accuratly represented
                       - [+] Zoom-friendly
-        
-        :param draw_wells
-            Draw the potential wells (only for square well)
         
         """
         
@@ -240,12 +251,7 @@ class Animation(MPL):
             self.ax.add_patch(patches.Circle(**circle_settings))
     
     def _plt_particles(self, step: int) -> None:
-        """ Plot particles
-        
-        :param step
-            Simulation step (int)
-    
-        """
+        """ Plot particles. """
         if self.scatter:
             self._plt_particles_scatter(step)
             return
