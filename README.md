@@ -23,7 +23,7 @@ script
 ```sh
 git clone https://github.com/TPVasconcelos/mdsea.git
 cd mdsea
-python3 setup.py install
+python setup.py install
 ```
 
 
@@ -33,7 +33,7 @@ In order to install the complete set of requirements and be able to
 make the most use of mdsea, run
 
 ```sh
-pip3 install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 To render 3D animation with [Blender](https://www.blender.org), you will
@@ -51,7 +51,7 @@ You can find the test scripts inside the `/tests` directory.
 You should start by running
 ```sh
 cd tests
-python3 initsetup.py
+python initsetup.py
 ```
 
 which will run a default simulation and store in in
