@@ -1,5 +1,26 @@
 #!/usr/local/bin/python
 # coding: utf-8
+
+"""
+mdsea - Molecular Dynamics Library
+
+mdsea is a stand-alone Python molecular dynamics library equipped with
+a flexible simulation engine and multiple analysis tools, including
+integrated beautiful visualization in 1, 2, and 3 dimensions.
+
+In this file we start by setting up the logging standards and format
+used in this package. The RotatingFileHandler (FileHandler) instance
+is used throughout the whole package. For consistency, we handle this
+on the top of the module right after imports. Do as follows:
+
+>>> import logging
+>>> from mdsea import loghandler
+>>>
+>>> log = logging.getLogger(__name__)
+>>> log.addHandler(loghandler)
+
+"""
+
 # ======================================================================
 # ---  Setup logging
 # ======================================================================
@@ -14,7 +35,8 @@ SUPRESSED_MODULES = ('matplotlib', 'apptools', 'asyncio', 'mayavi', 'pyface')
 
 
 def _setup_logging(format_file, format_stout, level, filename,
-                   maxbytes, supress):
+                   maxbytes, suppress):
+    """ Setup mdsea's logging. """
     import logging
     import os
     from logging.handlers import RotatingFileHandler
