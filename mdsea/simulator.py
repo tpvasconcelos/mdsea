@@ -90,7 +90,7 @@ class _BaseSimulator(object):
         # Then, we transform the itertools.combinations
         # object into a numpy ndarray. Not perfect...
         # numpy.fromiter is way too slow for large
-        # iterables. Need a better way for this
+        # iterables. Need a better way to do this
         cnt = self.sm.NUM_PARTICLES * (self.sm.NUM_PARTICLES - 1)
         self.pairs = np.fromiter(
             chain.from_iterable(combinations(range(self.sm.NUM_PARTICLES), 2)),
@@ -195,7 +195,7 @@ class _BaseSimulator(object):
                   radius: Optional[float] = None,
                   where: str = 'inside',
                   return_drunit: bool = False,
-                  return_where: bool = False) -> np.array:
+                  return_indexes: bool = False) -> np.array:
         """
         
         Get the pairs inside/outside a given radial distance,
@@ -240,19 +240,10 @@ class _BaseSimulator(object):
         if radius is None:
             # If no cutoff radius is passed, we'll return everything
             if return_drunit:
-                rtrn.append(
-                    np.nan_to_num(dr_vecs / self.distances[:, np.newaxis]))
-                # with np.errstate(invalid='raise'):
-                #     try:
-                #         rtrn.append(dr_vecs / self.distances[:, np.newaxis])
-                #     except FloatingPointError as e:
-                #         with np.errstate(invalid='ignore'):
-                #             print(e)
-                #             drunit = dr_vecs / self.distances[:, np.newaxis]
-                #             drunit[np.where(drunit == np.nan)] = \
-                #                 1 / self.sm.NDIM ** (1 / self.sm.NDIM)
-                #             rtrn.append(drunit)
-            if return_where:
+                # TODO: why do we need np.nan_to_num here?
+                rtrn.append(np.nan_to_num(
+                    dr_vecs / self.distances[:, np.newaxis]))
+            if return_indexes:
                 # Remember: If no cutoff radius is passed, we'll return
                 # everything. Therefore, the where table is all True!
                 rtrn.append(self.true_matrix)
@@ -260,23 +251,29 @@ class _BaseSimulator(object):
             # Build a truth table for the pairs
             # within a certain radial distance
             if where == 'inside':
-                where = self.distances < radius
+                indexes = self.distances < radius
             elif where == 'outisde':
-                where = self.distances > radius
+                indexes = self.distances > radius
+            else:
+                raise ValueError(f"'{where}' is not a valid value for 'where'."
+                                 f"Try 'inside' or 'outside' instead.")
             
-            distances = self.distances[where]
+            self.distances = self.distances[indexes]
             if return_drunit:
-                rtrn.append(dr_vecs[where] / distances[:, np.newaxis])
-            if return_where:
-                rtrn.append(where)
+                rtrn.append(dr_vecs[indexes] / self.distances[:, np.newaxis])
+            if return_indexes:
+                rtrn.append(indexes)
         
-        if any((return_drunit, return_where)):
+        if any((return_drunit, return_indexes)):
             rtrn.insert(0, self.distances)
             return rtrn
         
         return self.distances
     
     def get_acc(self, radius: float = None):
+        """ Returns the acceleration vectors for particles under a given
+        pairwise potential force and within a certain cutoff radius. """
+        
         dist, drunit = self.get_dists(radius, return_drunit=True)
         
         acc = drunit * self.sm.POT.force(dist[:, np.newaxis]) / self.sm.MASS
@@ -284,21 +281,23 @@ class _BaseSimulator(object):
         a_vecs = self.ndnp_zeroes.copy()
         
         a_vecs[:, self.p0set] += np.array(
-            [np.bincount(self.p0, acc[:, i])
-             for i in range(self.sm.NDIM)])
+            [np.bincount(self.p0, acc[:, i]) for i in range(self.sm.NDIM)])
         
-        a_vecs[:, self.p1set] -= \
-            np.array([np.bincount(self.p1sort, acc[self.p1argsort][:, i])
-                      for i in range(self.sm.NDIM)])[:, 1:]
+        a_vecs[:, self.p1set] -= np.array(
+            [np.bincount(self.p1sort, acc[self.p1argsort][:, i])
+             for i in range(self.sm.NDIM)])[:, 1:]
         
         return a_vecs
     
-    def get_pairs(self, radius: Optional[float],
-                  where: str = 'inside') -> zip:
-        dist, drunit, where = self.get_dists(radius, where,
-                                             return_drunit=True,
-                                             return_where=True)
-        return zip(self.pairs[where], dist, drunit)
+    def get_pairs(self, radius: Optional[float], where: str = 'inside') -> zip:
+        """ Returns the pairs, distances, and normalized displacement
+        vectors for particle pairs within a certain cutoff radius."""
+        
+        dist, drunit, indexes = self.get_dists(radius, where,
+                                               return_drunit=True,
+                                               return_indexes=True)
+        
+        return zip(self.pairs[indexes], dist, drunit)
 
 
 # TODO: Update whole class in accordance with self.*coords
@@ -498,8 +497,8 @@ class ContinuousPotentialSolver(_BaseSimulator):
         
         algorithms_tbl = {
             'verlet': self.algorithm_verlet,
-            'old': self.algorithm_old,
             'simple': self.algorithm_simple,
+            'old': self.algorithm_old,
             }
         
         try:
@@ -551,12 +550,14 @@ class ContinuousPotentialSolver(_BaseSimulator):
                                      v in np.stack(self.sm.v_vec, axis=-1)])
     
     def algorithm_simple(self):
+        """ Simple Verlet AAlgorithm. """
         # Update position: t + dt
         self.sm.r_vec += self.sm.v_vec * self.dt
         # Update velocity: t + dt
         self.sm.v_vec += 0.5 * self.get_acc() * self.dt
     
     def algorithm_verlet(self):
+        """ Verlet Algorithm. """
         # Update velocity: t + dt/2
         self.sm.v_vec += 0.5 * self.get_acc() * self.dt
         # Update position: t + dt
