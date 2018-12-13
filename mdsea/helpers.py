@@ -97,8 +97,8 @@ class ProgressBar(object):
         
         self.prefix = f"ProgressBar ({self.name}):"
         
-        self.progress = 0
-        self.timespercycle = []
+        self.percentage = 0
+        self._timespercycle = []
         self.t_lastcycle = time()
         
         self.tstart = time()
@@ -129,32 +129,34 @@ class ProgressBar(object):
                    'lifetime': f'{self.get_duration(ndigits)}s'}
         self.log.info("%s %s", self.prefix, records)
     
-    def log_progress(self, i) -> None:
+    def log_progress(self, step) -> None:
         
         # Evaluate progress percentage
-        percent = round(100 * (i + 1) / self.stop)
+        percent = round(100 * (step + 1) / self.stop)
         
-        # Round percentage to step
+        # Round percentage to multiple of self.step
         rpercent = int(self.step * round(float(percent) / self.step))
-        if self.progress >= rpercent or rpercent % self.step:
+        if self.percentage >= rpercent or rpercent % self.step:
+            # Ignore logging if the new progress percentage is not
+            # greater or equal to the next multiple of self.step
             return
         
         stepsleft = (100 - percent) / self.step
         
-        if i <= 1:
+        if step <= 1:
             # Ignore the first longer setup cycle
             eta = round(stepsleft * (time() - self.t_lastcycle))
         else:
-            self.timespercycle.append(time() - self.t_lastcycle)
-            eta = round(stepsleft * stats.mean(self.timespercycle))
+            self._timespercycle.append(time() - self.t_lastcycle)
+            eta = round(stepsleft * stats.mean(self._timespercycle))
         
-        records = {'step': f'{i + 1}/{self.stop}',
+        records = {'step': f'{step + 1}/{self.stop}',
                    'percentage': percent,
                    'ETA': f'{eta}s'}
         
         self.log.info("%s %s", self.prefix, records)
         
-        self.progress = rpercent
+        self.percentage = rpercent
         self.t_lastcycle = time()
 
 
