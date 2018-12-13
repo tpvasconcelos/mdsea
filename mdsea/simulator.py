@@ -3,7 +3,7 @@
 import logging
 import statistics as stats
 from itertools import chain, combinations
-from typing import Optional
+from typing import List, Optional, Union
 
 import numpy as np
 from numpy.core.umath_tests import inner1d
@@ -180,8 +180,8 @@ class _BaseSimulator(object):
         if self.mean_ekin is None:
             log.warning("Cannot update the temperature without first"
                         " evaluating the mean kinetic energy.")
-        else:
-            self.temp = (2 / 3) * self.mean_ekin / self.sm.K_BOLTZMANN
+            return
+        self.temp = (2 / 3) * self.mean_ekin / self.sm.K_BOLTZMANN
     
     def update_meanke(self):
         vvect = np.stack(self.sm.v_vec, axis=-1)
@@ -199,7 +199,8 @@ class _BaseSimulator(object):
                   radius: Optional[float] = None,
                   where: str = 'inside',
                   return_drunit: bool = False,
-                  return_indexes: bool = False) -> np.array:
+                  return_indexes: bool = False
+                  ) -> Union[np.array, List[np.array]]:
         """
         
         Get the pairs inside/outside a given radial distance,
@@ -260,7 +261,7 @@ class _BaseSimulator(object):
                 indexes = self.distances > radius
             else:
                 raise ValueError(f"'{where}' is not a valid value for 'where'."
-                                 f"Try 'inside' or 'outside' instead.")
+                                 " Try 'inside' or 'outside' instead.")
             
             self.distances = self.distances[indexes]
             if return_drunit:
