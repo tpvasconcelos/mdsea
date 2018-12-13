@@ -39,6 +39,7 @@ class _BaseSimulator(object):
         self.mean_epot = None
         
         # Set initial temperature
+        self.temp_init = self.sm.TEMP
         self.temp = self.sm.TEMP
         
         # Set integration time interval ("delta-t")
@@ -156,13 +157,16 @@ class _BaseSimulator(object):
     def apply_special(self) -> None:
         """ Handle special events. """
         if self.sm.ISOTHERMAL:
-            self._quench(self.temp)
+            self._quench(self.temp_init)
         if self.step in self.sm.QUENCH_STEP:
             self._quench(self.sm.QUENCH_T.pop(0))
     
     def _quench(self, temp: float) -> None:
         self.update_temp()
-        self.sm.v_vec *= (temp / self.temp) ** 0.5
+        f = 1
+        if self.temp:
+            f = (temp / self.temp) ** 0.5
+        self.sm.v_vec *= f
     
     # ==================================================================
     # ---  Helper Functions
