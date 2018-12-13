@@ -177,7 +177,11 @@ class _BaseSimulator(object):
             self.sm.v_vec[-1] -= self.sm.GRAVITY_ACCELERATION * self.dt
     
     def update_temp(self) -> None:
-        self.temp = (2 / 3) * self.mean_ekin / self.sm.K_BOLTZMANN
+        if self.mean_ekin is None:
+            log.warning("Cannot update the temperature without first"
+                        " evaluating the mean kinetic energy.")
+        else:
+            self.temp = (2 / 3) * self.mean_ekin / self.sm.K_BOLTZMANN
     
     def update_meanke(self):
         vvect = np.stack(self.sm.v_vec, axis=-1)
