@@ -550,7 +550,7 @@ class ContinuousPotentialSolver(_BaseSimulator):
                                      v in np.stack(self.sm.v_vec, axis=-1)])
     
     def algorithm_simple(self):
-        """ Simple Verlet AAlgorithm. """
+        """ Simple Verlet Algorithm. """
         # Update position: t + dt
         self.sm.r_vec += self.sm.v_vec * self.dt
         # Update velocity: t + dt
