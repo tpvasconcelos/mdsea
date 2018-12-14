@@ -1,7 +1,6 @@
 #!/usr/local/bin/python
 # coding: utf-8
 import logging
-import statistics as stats
 from itertools import chain, combinations
 from typing import Optional
 
@@ -484,7 +483,6 @@ class ContinuousPotentialSolver(_BaseSimulator):
         algorithms_tbl = {
             'verlet': self.algorithm_verlet,
             'simple': self.algorithm_simple,
-            'old': self.algorithm_old,
             }
         
         try:
@@ -493,47 +491,6 @@ class ContinuousPotentialSolver(_BaseSimulator):
             msg = f"Algorithm '{algorithm}' not found " \
                 f"in {tuple(algorithms_tbl.keys())}"
             raise KeyError(msg)
-    
-    def algorithm_old(self):
-        
-        self.sm.r_vec += self.sm.v_vec * self.dt
-        
-        potential_energy = 0
-        new_collpairs = []
-        
-        for (i, j), dist, dr_unit in self.get_pairs(self.sm.R_CUTOFF):
-            
-            # Calculate the extra velocity for each
-            # particle from the pair interaction.
-            # ---
-            # acceleration = self.sm.POT.force(dist) / self.sm.MASS
-            # dv = acceleration * self.dt
-            # extra_vel = dr_unit * dv
-            # ---
-            extra_vel = dr_unit * self.dt * self.sm.POT.force(
-                dist) / self.sm.MASS
-            
-            # Apply that extra velocity to each particle.
-            self.sm.v_vec[:, i] += extra_vel
-            self.sm.v_vec[:, j] -= extra_vel
-            
-            # Also, include collision damping set by RESTITUTION_COEFF.
-            if self.apply_restcoeff and dist < 2 * self.sm.RADIUS_PARTICLE:
-                new_collpairs.append((i, j))
-                if (i, j) not in self.colliding_pairs:
-                    v_factor = self._e * np.dot(self._FLIPID, dr_unit)
-                    self.sm.v_vec[:, i] *= v_factor
-                    self.sm.v_vec[:, j] *= v_factor
-            
-            # Update potential energies
-            potential_energy += self.sm.POT.potential(dist)
-        
-        self.colliding_pairs = new_collpairs
-        
-        # Update mean energies
-        self.mean_pe = potential_energy / self.sm.NUM_PARTICLES
-        self.mean_ke = stats.mean([0.5 * self.sm.MASS * np.dot(v, v) for
-                                   v in np.stack(self.sm.v_vec, axis=-1)])
     
     def algorithm_simple(self):
         """ Simple Verlet Algorithm. """
@@ -552,19 +509,18 @@ class ContinuousPotentialSolver(_BaseSimulator):
         self.sm.v_vec += 0.5 * self.update_acc() * self.dt
     
     def apply_collision_damping(self):
-        """
-        TODO: review this whole method!
-        
-        """
-        new_collpairs = []
-        collpairs = self.get_pairs(2 * self.sm.RADIUS_PARTICLE)
-        for (i, j), dist, dr_unit in collpairs:
-            new_collpairs.append((i, j))
-            if (i, j) not in self.colliding_pairs:
-                v_factor = self._e * np.dot(self._FLIPID, dr_unit)
-                self.sm.v_vec[:, i] *= v_factor
-                self.sm.v_vec[:, j] *= v_factor
-        self.colliding_pairs = new_collpairs
+        """ Apply a dissipative force for every particle collision. """
+        pass
+        # TODO: review this whole method!
+        # new_collpairs = []
+        # collpairs = self.get_pairs(2 * self.sm.RADIUS_PARTICLE)
+        # for (i, j), dist, dr_unit in collpairs:
+        #     new_collpairs.append((i, j))
+        #     if (i, j) not in self.colliding_pairs:
+        #         v_factor = self._e * np.dot(self._FLIPID, dr_unit)
+        #         self.sm.v_vec[:, i] *= v_factor
+        #         self.sm.v_vec[:, j] *= v_factor
+        # self.colliding_pairs = new_collpairs
     
     def advance(self):
         """ Advance the simulation one step. """
@@ -572,12 +528,12 @@ class ContinuousPotentialSolver(_BaseSimulator):
         self.apply_algorithm()
         self.apply_field()
         if self.apply_restcoeff:
-            # self.apply_collision_damping()
-            pass
+            self.apply_collision_damping()
         self.apply_special()
         self.update_energies()
     
     def run_simulation(self) -> None:
+        """ Run simulation. """
         
         simrange = range(self.step, self.sm.STEPS)
         
