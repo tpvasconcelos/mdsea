@@ -3,7 +3,7 @@
 import logging
 import statistics as stats
 from itertools import chain, combinations
-from typing import List, Optional, Union
+from typing import Optional
 
 import numpy as np
 from numpy.core.umath_tests import inner1d
@@ -18,6 +18,14 @@ log.addHandler(loghandler)
 
 
 class _BaseSimulator(object):
+    """
+    _BaseSimulator object
+    
+    This object will be the basis for any simulator. It contains the
+    main class variables and methods needed for any simulation.
+    
+    """
+    
     def __init__(self, sm: SysManager) -> None:
         
         self.sm = sm
@@ -29,14 +37,19 @@ class _BaseSimulator(object):
         self.ndnp_zeroes = np.zeros((self.sm.NDIM, self.sm.NUM_PARTICLES),
                                     dtype=DTYPE)
         
-        # Updated every time self.get_dists is called
-        self.distances = None
+        # Updated in update_dists property
+        self.dists = None
+        self.drunits = None
+        self.pairs_indexes = None
+        
+        # Acceleration vectors (defined in property)
+        self.acc = self.ndnp_zeroes.copy()
         
         # Mean kinetic and potential energies
         # They will be defined later but
         # should be of type: float
-        self.mean_ekin = None
-        self.mean_epot = None
+        self.mean_ke = None
+        self.mean_pe = None
         
         # Set initial temperature
         self.temp_init = self.sm.TEMP
@@ -50,9 +63,9 @@ class _BaseSimulator(object):
             self.dt = get_dt(self.sm.RADIUS_PARTICLE, self.mean_speed)
         
         # Boundary conditions stuff
-        self.apply_boundaryconditions = self.periodic_boundaries
+        self.apply_boundaryconditions = self.apply_pbc
         if not self.sm.PBC:
-            self.apply_boundaryconditions = self.hard_boundaries
+            self.apply_boundaryconditions = self.apply_hbc
         
         # Flipped identity matrix
         self._FLIPID = quicker.flipid(self.sm.NDIM)
@@ -80,7 +93,7 @@ class _BaseSimulator(object):
         
         # Defined in ._init_pairs()
         self.true_matrix = None
-        self.pairs = None
+        self.all_pairs = None
         self.p0 = None
         self.p1 = None
     
@@ -92,17 +105,17 @@ class _BaseSimulator(object):
         # numpy.fromiter is way too slow for large
         # iterables. Need a better way to do this
         cnt = self.sm.NUM_PARTICLES * (self.sm.NUM_PARTICLES - 1)
-        self.pairs = np.fromiter(
+        self.all_pairs = np.fromiter(
             chain.from_iterable(combinations(range(self.sm.NUM_PARTICLES), 2)),
             count=cnt, dtype=np.int32).reshape(-1, 2)
         # shortcuts
-        self.p0 = self.pairs[:, 0]
-        self.p1 = self.pairs[:, 1]
+        self.p0 = self.all_pairs[:, 0]
+        self.p1 = self.all_pairs[:, 1]
         # set of indices
         self.p0set = np.fromiter(set(self.p0), dtype=int)
         self.p1set = np.fromiter(set(self.p1), dtype=int)
         # True matrix
-        self.true_matrix = np.repeat(True, self.pairs.shape[0])
+        self.true_matrix = np.repeat(True, self.all_pairs.shape[0])
         # p1 sorted
         self.p1sort = np.sort(self.p1)
         self.p1argsort = np.argsort(self.p1)
@@ -112,16 +125,12 @@ class _BaseSimulator(object):
     # ==================================================================
     
     def update_files(self) -> None:
-        # # Get memory info to decide if we should update the files
-        # mem = helpers.get_memory()
-        # mem_ratio = mem.rss / mem.vms
-        #
-        # if mem_ratio < 0.5:
-        #     pass
-        #
-        # log.debug("memory (rss) / memory (vms) = %.2f", mem_ratio)
+        """ Updated the default datasets defines in the
+        SystemManager. """
+        
         values = [[self.sm.r_vec], [self.sm.v_vec],
-                  [self.mean_epot], [self.mean_ekin], [self.temp]]
+                  [self.mean_pe], [self.mean_ke],
+                  [self.temp]]
         
         for dataset, val in zip(self.sm.all_dsnames, values):
             self.sm.update_ds(dataset, val, self.step)
@@ -130,15 +139,22 @@ class _BaseSimulator(object):
     # ---  Boundary Conditions
     # ==================================================================
     
-    def periodic_boundaries(self) -> None:
+    def apply_pbc(self) -> None:
+        """
+        Apply the Periodic-Boundary-Conditions algorithm.
+        
+        One-line algorithm:
+        >>> self.sm.r_vec -= self.sm.LEN_BOX * np.floor(
+        >>>     self.sm.r_vec / self.sm.LEN_BOX)
+        
+        """
         self.sm.r_vec[np.where(self.sm.r_vec < 0)] += self.sm.LEN_BOX
-        self.sm.r_vec[np.where(self.sm.r_vec > self.sm.LEN_BOX)] \
-            -= self.sm.LEN_BOX
-        # compact form:
-        # self.sm.r_vec \
-        #     -= np.floor(self.sm.r_vec / self.sm.LEN_BOX) * self.sm.LEN_BOX
+        self.sm.r_vec[
+            np.where(self.sm.r_vec > self.sm.LEN_BOX)] -= self.sm.LEN_BOX
     
-    def hard_boundaries(self) -> None:
+    def apply_hbc(self) -> None:
+        """ Apply the Hard-Boundary-Conditions algorithm. """
+        
         # Particles that passed to the negative side of the boundary
         where = np.where(self.sm.r_vec - self.sm.RADIUS_PARTICLE < 0)
         self.sm.r_vec[where] = self.sm.RADIUS_PARTICLE
@@ -161,11 +177,11 @@ class _BaseSimulator(object):
         if self.step in self.sm.QUENCH_STEP:
             self._quench(self.sm.QUENCH_T.pop(0))
     
-    def _quench(self, temp: float) -> None:
-        self.update_temp()
+    def _quench(self, temperature: float) -> None:
+        t_i = self.update_temp()
         f = 1
-        if self.temp:
-            f = (temp / self.temp) ** 0.5
+        if t_i:
+            f = (temperature / t_i) ** 0.5
         self.sm.v_vec *= f
     
     # ==================================================================
@@ -173,136 +189,105 @@ class _BaseSimulator(object):
     # ==================================================================
     
     def apply_field(self):
+        """ Apply an external field. """
+        # TODO: add the option for the user to pass a field.
         if self.sm.GRAVITY:
             self.sm.v_vec[-1] -= self.sm.GRAVITY_ACCELERATION * self.dt
     
-    def update_temp(self) -> None:
-        if self.mean_ekin is None:
+    def update_temp(self):
+        """ Get (and/or update) the system's temperature. """
+        if self.mean_ke is None:
             log.warning("Cannot update the temperature without first"
                         " evaluating the mean kinetic energy.")
             return
-        self.temp = (2 / 3) * self.mean_ekin / self.sm.K_BOLTZMANN
+        self.temp = (2 / 3) * self.mean_ke / self.sm.K_BOLTZMANN
+        return self.temp
     
-    def update_meanke(self):
+    def update_mean_ke(self):
+        """ Get (and/or update) the mean kinetic energy. """
         vvect = np.stack(self.sm.v_vec, axis=-1)
-        self.mean_ekin = 0.5 * self.sm.MASS * inner1d(vvect, vvect).mean()
+        self.mean_ke = 0.5 * self.sm.MASS * inner1d(vvect, vvect).mean()
+        return self.mean_ke
     
-    def update_meanpe(self):
-        self.mean_epot = np.add.reduce(self.sm.POT.potential(self.distances)) \
-                         / self.sm.NUM_PARTICLES
+    def update_mean_pe(self):
+        """ Get (and/or update) the mean potential energy. """
+        self.mean_pe = np.add.reduce(
+            self.sm.POT.potential(self.dists)) / self.sm.NUM_PARTICLES
+        return self.mean_pe
     
     def track_energies(self):
-        self.update_meanpe()
-        self.update_meanke()
+        """ Update the mean kinetic and potential energies. """
+        self.update_mean_pe()
+        self.update_mean_ke()
     
-    def get_dists(self,
-                  radius: Optional[float] = None,
-                  where: str = 'inside',
-                  return_drunit: bool = False,
-                  return_indexes: bool = False
-                  ) -> Union[np.array, List[np.array]]:
-        """
-        
-        Get the pairs inside/outside a given radial distance,
-        where the 'where' parameter has to be either
-        'inside' or 'outside', respectively.
-        
-
-        Representation of Periodic Boundary Conditions:
-
-        |       Normal Boundary Conditions      |
-        |                                       |
-        |    X---------------------------->Y    |
-        |                                       |
-        |                                       |
-        |      Periodic Boundary Conditions     |
-        |                                       |
-        |<---X                             Y<---|
-        |                                       |
-
-        Returns : zip((i, j), dist, dr)
-            (i, j) = pairs inside/outside radius
-            dist = distance between the pairs
-            dr = pairwise separation distance vector
-
-        """
+    def update_dists(self, radius: Optional[float] = None,
+                     where: str = 'inside'):
+        """ Get the pairs inside/outside a given radial distance (cutoff
+         radius), where the 'where' parameter has to be either  'inside'
+        or 'outside', respectively. """
         
         # Transpose position vector
         r_vecs = np.stack(self.sm.r_vec, axis=-1)
         
         # Calculate the pairwise separation distance vectors
         dr_vecs = r_vecs[self.p1] - r_vecs[self.p0]
-        
         # If these vectors are bigger than half the boundary
         # length, reflect the relative distance to obey
         # boundary conditions. (See the docstring)
         if self.sm.PBC:
             dr_vecs -= np.rint(dr_vecs / self.sm.LEN_BOX) * self.sm.LEN_BOX
         
-        self.distances = quicker.norm(dr_vecs, axis=1)
+        # Calculate euclidean distances
+        self.dists = quicker.norm(dr_vecs, axis=1)
         
-        rtrn = []
         if radius is None:
-            # If no cutoff radius is passed, we'll return everything
-            if return_drunit:
-                # TODO: why do we need np.nan_to_num here?
-                rtrn.append(np.nan_to_num(
-                    dr_vecs / self.distances[:, np.newaxis]))
-            if return_indexes:
-                # Remember: If no cutoff radius is passed, we'll return
-                # everything. Therefore, the where table is all True!
-                rtrn.append(self.true_matrix)
+            self.pairs_indexes = self.true_matrix.copy()
+            self.drunits = dr_vecs / self.dists[:, np.newaxis]
+            return self.dists
+        
+        if where == 'inside':
+            self.pairs_indexes = self.dists < radius
+        elif where == 'outside':
+            self.pairs_indexes = self.dists > radius
         else:
-            # Build a truth table for the pairs
-            # within a certain radial distance
-            if where == 'inside':
-                indexes = self.distances < radius
-            elif where == 'outisde':
-                indexes = self.distances > radius
-            else:
-                raise ValueError(f"'{where}' is not a valid value for 'where'."
-                                 " Try 'inside' or 'outside' instead.")
-            
-            self.distances = self.distances[indexes]
-            if return_drunit:
-                rtrn.append(dr_vecs[indexes] / self.distances[:, np.newaxis])
-            if return_indexes:
-                rtrn.append(indexes)
+            raise ValueError(f"'{where}' is not a valid value for 'where'. "
+                             f"Try 'inside' or 'outside' instead.")
         
-        if any((return_drunit, return_indexes)):
-            rtrn.insert(0, self.distances)
-            return rtrn
+        self.dists = self.dists[self.pairs_indexes]
         
-        return self.distances
+        self.drunits = \
+            dr_vecs[self.pairs_indexes] / self.dists[:, np.newaxis]
+        
+        return self.dists
     
-    def get_acc(self, radius: float = None):
-        """ Returns the acceleration vectors for particles under a given
-        pairwise potential force and within a certain cutoff radius. """
+    def update_acc(self, radius: float = None):
+        """ Returns (and/or update) the acceleration vectors for
+        particles under a given pairwise potential force and within a
+        certain cutoff radius. """
+        self.update_dists(radius=radius)
         
-        dist, drunit = self.get_dists(radius, return_drunit=True)
+        acc = self.drunits * self.sm.POT.force(
+            self.dists[:, np.newaxis]) / self.sm.MASS
         
-        acc = drunit * self.sm.POT.force(dist[:, np.newaxis]) / self.sm.MASS
+        self.acc = self.ndnp_zeroes.copy()
         
-        a_vecs = self.ndnp_zeroes.copy()
-        
-        a_vecs[:, self.p0set] += np.array(
+        self.acc[:, self.p0set] += np.array(
             [np.bincount(self.p0, acc[:, i]) for i in range(self.sm.NDIM)])
         
-        a_vecs[:, self.p1set] -= np.array(
+        self.acc[:, self.p1set] -= np.array(
             [np.bincount(self.p1sort, acc[self.p1argsort][:, i])
              for i in range(self.sm.NDIM)])[:, 1:]
         
-        return a_vecs
+        return self.acc
     
     def get_pairs(self, radius: Optional[float], where: str = 'inside') -> zip:
         """ Returns the pairs, distances, and normalized displacement
         vectors for particle pairs within a certain cutoff radius."""
         
-        dist, drunit, indexes = self.get_dists(radius, where,
-                                               return_drunit=True,
-                                               return_indexes=True)
+        self.update_dists(radius=radius, where=where)
         
-        return zip(self.pairs[indexes], dist, drunit)
+        return zip(self.all_pairs[self.pairs_indexes], self.dists,
+                   self.drunits)
 
 
 # TODO: Update whole class in accordance with self.*coords
@@ -559,16 +544,16 @@ class ContinuousPotentialSolver(_BaseSimulator):
         # Update position: t + dt
         self.sm.r_vec += self.sm.v_vec * self.dt
         # Update velocity: t + dt
-        self.sm.v_vec += 0.5 * self.get_acc() * self.dt
+        self.sm.v_vec += 0.5 * self.update_acc() * self.dt
     
     def algorithm_verlet(self):
         """ Verlet Algorithm. """
         # Update velocity: t + dt/2
-        self.sm.v_vec += 0.5 * self.get_acc() * self.dt
+        self.sm.v_vec += 0.5 * self.update_acc() * self.dt
         # Update position: t + dt
         self.sm.r_vec += self.sm.v_vec * self.dt
         # Update velocity: t + dt
-        self.sm.v_vec += 0.5 * self.get_acc() * self.dt
+        self.sm.v_vec += 0.5 * self.update_acc() * self.dt
     
     def apply_collision_damping(self):
         """
@@ -601,7 +586,7 @@ class ContinuousPotentialSolver(_BaseSimulator):
         
         # _init_pairs is slow so we only
         # call it if we really need it
-        if len(simrange) > 0 and self.pairs is None:
+        if len(simrange) > 0 and self.all_pairs is None:
             self._init_pairs()
         
         # Make sure that we update
