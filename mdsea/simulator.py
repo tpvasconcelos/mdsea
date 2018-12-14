@@ -63,18 +63,14 @@ class _BaseSimulator(object):
             self.dt = get_dt(self.sm.RADIUS_PARTICLE, self.mean_speed)
         
         # Boundary conditions stuff
-        self.apply_boundaryconditions = self.apply_pbc
-        if not self.sm.PBC:
-            self.apply_boundaryconditions = self.apply_hbc
+        self.apply_bc = self.apply_pbc if self.sm.PBC else self.apply_hbc
         
         # Flipped identity matrix
         self._FLIPID = quicker.flipid(self.sm.NDIM)
         # "Damping factor"
         self._e = self.sm.RESTITUTION_COEFF + (1 - self.sm.RESTITUTION_COEFF)
-        # Apply rest coeff ??
+        # Apply rest coefficient ??
         self.apply_restcoeff = bool(self.sm.RESTITUTION_COEFF < 1)
-        
-        self.pdiameter = 2 * self.sm.RADIUS_PARTICLE
         
         self.pbarr = ProgressBar("Simulator", self.sm.STEPS, __name__)
         
@@ -125,7 +121,7 @@ class _BaseSimulator(object):
     # ==================================================================
     
     def update_files(self) -> None:
-        """ Updated the default datasets defines in the
+        """ Update the default datasets defines in the
         SystemManager. """
         
         values = [[self.sm.r_vec], [self.sm.v_vec],
@@ -195,7 +191,7 @@ class _BaseSimulator(object):
             self.sm.v_vec[-1] -= self.sm.GRAVITY_ACCELERATION * self.dt
     
     def update_temp(self):
-        """ Get (and/or update) the system's temperature. """
+        """ Update the system's temperature. """
         if self.mean_ke is None:
             log.warning("Cannot update the temperature without first"
                         " evaluating the mean kinetic energy.")
@@ -204,18 +200,18 @@ class _BaseSimulator(object):
         return self.temp
     
     def update_mean_ke(self):
-        """ Get (and/or update) the mean kinetic energy. """
+        """ Update the mean kinetic energy. """
         vvect = np.stack(self.sm.v_vec, axis=-1)
         self.mean_ke = 0.5 * self.sm.MASS * inner1d(vvect, vvect).mean()
         return self.mean_ke
     
     def update_mean_pe(self):
-        """ Get (and/or update) the mean potential energy. """
+        """ Update the mean potential energy. """
         self.mean_pe = np.add.reduce(
             self.sm.POT.potential(self.dists)) / self.sm.NUM_PARTICLES
         return self.mean_pe
     
-    def track_energies(self):
+    def update_energies(self):
         """ Update the mean kinetic and potential energies. """
         self.update_mean_pe()
         self.update_mean_ke()
@@ -522,7 +518,7 @@ class ContinuousPotentialSolver(_BaseSimulator):
             self.sm.v_vec[:, j] -= extra_vel
             
             # Also, include collision damping set by RESTITUTION_COEFF.
-            if self.apply_restcoeff and dist < self.pdiameter:
+            if self.apply_restcoeff and dist < 2 * self.sm.RADIUS_PARTICLE:
                 new_collpairs.append((i, j))
                 if (i, j) not in self.colliding_pairs:
                     v_factor = self._e * np.dot(self._FLIPID, dr_unit)
@@ -535,9 +531,9 @@ class ContinuousPotentialSolver(_BaseSimulator):
         self.colliding_pairs = new_collpairs
         
         # Update mean energies
-        self.mean_epot = potential_energy / self.sm.NUM_PARTICLES
-        self.mean_ekin = stats.mean([0.5 * self.sm.MASS * np.dot(v, v) for
-                                     v in np.stack(self.sm.v_vec, axis=-1)])
+        self.mean_pe = potential_energy / self.sm.NUM_PARTICLES
+        self.mean_ke = stats.mean([0.5 * self.sm.MASS * np.dot(v, v) for
+                                   v in np.stack(self.sm.v_vec, axis=-1)])
     
     def algorithm_simple(self):
         """ Simple Verlet Algorithm. """
@@ -561,7 +557,8 @@ class ContinuousPotentialSolver(_BaseSimulator):
         
         """
         new_collpairs = []
-        for (i, j), dist, dr_unit in self.get_pairs(self.pdiameter):
+        collpairs = self.get_pairs(2 * self.sm.RADIUS_PARTICLE)
+        for (i, j), dist, dr_unit in collpairs:
             new_collpairs.append((i, j))
             if (i, j) not in self.colliding_pairs:
                 v_factor = self._e * np.dot(self._FLIPID, dr_unit)
@@ -570,17 +567,17 @@ class ContinuousPotentialSolver(_BaseSimulator):
         self.colliding_pairs = new_collpairs
     
     def advance(self):
-        self.apply_boundaryconditions()
+        """ Advance the simulation one step. """
+        self.apply_bc()
         self.apply_algorithm()
         self.apply_field()
         if self.apply_restcoeff:
             # self.apply_collision_damping()
             pass
         self.apply_special()
+        self.update_energies()
     
     def run_simulation(self) -> None:
-        
-        self.pbarr.set_start()
         
         simrange = range(self.step, self.sm.STEPS)
         
@@ -595,12 +592,13 @@ class ContinuousPotentialSolver(_BaseSimulator):
             self.update_files()
         
         # ---  the actual simulation  ---
+        self.pbarr.set_start()
+        
         for self.step in simrange:
             self.pbarr.log_progress(self.step)
             self.advance()
-            self.track_energies()
             self.update_files()
-        # ---  the actual simulation  ---
         
         self.pbarr.set_finish()
         self.pbarr.log_duration()
+        # ---  the actual simulation  ---
