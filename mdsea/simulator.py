@@ -252,9 +252,10 @@ class _BaseSimulator(object):
         
         # Calculate the pairwise separation distance vectors
         dr_vecs = r_vecs[self.p1] - r_vecs[self.p0]
-        # If these vectors are bigger than half the boundary
-        # length, reflect the relative distance to obey
-        # boundary conditions. (See the docstring)
+        
+        # If the vectors are bigger than half of the
+        # box length, reflect the relative distance
+        # to respect periodic boundary conditions.
         if self.sm.PBC:
             dr_vecs -= np.rint(dr_vecs / self.sm.LEN_BOX) * self.sm.LEN_BOX
         
