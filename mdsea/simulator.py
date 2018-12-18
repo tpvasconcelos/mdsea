@@ -189,6 +189,7 @@ class _BaseSimulator(object):
         if self.sm.GRAVITY:
             self.sm.v_vec[-1] -= self.sm.GRAVITY_ACCELERATION * self.dt
     
+    @property
     def com(self):
         """ Centre of mass. """
         if self.sm.PBC:
