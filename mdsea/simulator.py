@@ -189,6 +189,13 @@ class _BaseSimulator(object):
         if self.sm.GRAVITY:
             self.sm.v_vec[-1] -= self.sm.GRAVITY_ACCELERATION * self.dt
     
+    def com(self):
+        """ Centre of mass. """
+        if self.sm.PBC:
+            log.warning("COM computation not available for PBC yet!")
+            return
+        return np.mean(self.sm.r_vec, axis=1)
+    
     def update_temp(self):
         """ Update the system's temperature. """
         if self.mean_ke is None:
