@@ -197,6 +197,24 @@ class _BaseSimulator(object):
             return
         return np.mean(self.sm.r_vec, axis=1)
     
+    @property
+    def rog(self):
+        """ Radius of gyration. Mathematically expressed as the
+        root-mean-squared of the distances to the centre-of-mass. """
+        
+        # Calculate the separation distance
+        # vectors from the centre of mass
+        dr_vecs = np.stack(self.sm.r_vec, axis=-1) - self.com
+        
+        # If the vectors are bigger than half of the
+        # box length, reflect the relative distance
+        # to respect periodic boundary conditions.
+        if self.sm.PBC:
+            dr_vecs -= np.rint(dr_vecs / self.sm.LEN_BOX) * self.sm.LEN_BOX
+        
+        # Root-mean-squared of the distances to the centre-of-mass
+        return np.sqrt(np.mean(quicker.norm(dr_vecs, axis=1) ** 2))
+    
     def update_temp(self):
         """ Update the system's temperature. """
         if self.mean_ke is None:
