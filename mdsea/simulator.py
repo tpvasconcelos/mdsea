@@ -241,8 +241,8 @@ class _BaseSimulator(object):
     
     def update_mean_pe(self):
         """ Update the mean potential energy. """
-        self.mean_pe = np.add.reduce(
-            self.sm.POT.potential(self.dists)) / self.sm.NUM_PARTICLES
+        self.mean_pe = np.add.reduce(self.sm.POT.potential(self.dists)) \
+                       / self.sm.NUM_PARTICLES
         return self.mean_pe
     
     def update_energies(self):
@@ -296,8 +296,8 @@ class _BaseSimulator(object):
         certain cutoff radius. """
         self.update_dists(radius=radius)
         
-        acc = self.drunits * self.sm.POT.force(
-            self.dists[:, np.newaxis]) / self.sm.MASS
+        acc = self.drunits * self.sm.POT.force(self.dists[:, np.newaxis]) \
+              / self.sm.MASS
         
         self.acc = self.ndnp_zeroes.copy()
         
