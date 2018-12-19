@@ -18,10 +18,6 @@ Tuple3 = Tuple[float, float, float]
 Tuple4 = Tuple[float, float, float, float]
 
 
-##########
-#  USED  #
-##########
-
 def nsphere_volume(n, r):
     """ Return the volume of an n-sphere with radius r. """
     return math.pi ** (n / 2) * (r ** n) / gamma(n / 2 + 1)
@@ -160,12 +156,9 @@ class ProgressBar(object):
         self.t_lastcycle = time()
 
 
-# ----------------------------------------------------------------------
-
-
-##############
-#  NOT USED  #
-##############
+# ======================================================================
+# ---  Not used
+# ======================================================================
 
 def nd_spherical_coords(i, ndim):
     if i == ndim - 1:
