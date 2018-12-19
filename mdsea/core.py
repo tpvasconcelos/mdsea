@@ -153,12 +153,6 @@ class SysManager(object):
         # ---  Others settings
         # ==============================================================
         
-        # TODO: These shouldn't be here? should be in the simulator?
-        self.r_vec = np.zeros((self.NDIM, self.NUM_PARTICLES),
-                              dtype=DTYPE)
-        self.v_vec = np.zeros((self.NDIM, self.NUM_PARTICLES),
-                              dtype=DTYPE)
-        
         # Calculation of the 'box length' ('self.LEN_BOX')
         particle_volume = nsphere_volume(self.NDIM, self.RADIUS_PARTICLE)
         box_volume = self.NUM_PARTICLES * particle_volume / self.VOL_FRACTION

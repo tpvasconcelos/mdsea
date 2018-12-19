@@ -32,9 +32,14 @@ class _BaseSimulator(object):
         # Simulation step (start at zero)
         self.step = 0
         
-        # shortcut: zeroes array
+        # Shortcut for a zeroes array with
+        # shape = (NDIM, NUM_PARTICLES)
         self.ndnp_zeroes = np.zeros((self.sm.NDIM, self.sm.NUM_PARTICLES),
                                     dtype=DTYPE)
+
+        # Initial positions and velocities
+        self.r_vec = self.ndnp_zeroes.copy()
+        self.v_vec = self.ndnp_zeroes.copy()
         
         # Updated in update_dists property
         self.dists = None
@@ -57,7 +62,7 @@ class _BaseSimulator(object):
         # Set integration time interval ("delta-t")
         self.dt = self.sm.DELTA_T
         if self.dt is None:
-            speeds = quicker.norm(self.sm.v_vec, axis=0)
+            speeds = quicker.norm(self.v_vec, axis=0)
             self.mean_speed = float(np.mean(speeds))
             self.dt = get_dt(self.sm.RADIUS_PARTICLE, self.mean_speed)
         
@@ -123,7 +128,7 @@ class _BaseSimulator(object):
         """ Update the default datasets defines in the
         SystemManager. """
         
-        values = [[self.sm.r_vec], [self.sm.v_vec],
+        values = [[self.r_vec], [self.v_vec],
                   [self.mean_pe], [self.mean_ke],
                   [self.temp]]
         
@@ -139,27 +144,25 @@ class _BaseSimulator(object):
         Apply the Periodic-Boundary-Conditions algorithm.
         
         One-line algorithm:
-        >>> self.sm.r_vec -= self.sm.LEN_BOX * np.floor(
-        >>>     self.sm.r_vec / self.sm.LEN_BOX)
+        >>> self.r_vec -= self.sm.LEN_BOX * np.floor(
+        >>>     self.r_vec / self.sm.LEN_BOX)
         
         """
-        self.sm.r_vec[np.where(self.sm.r_vec < 0)] += self.sm.LEN_BOX
-        self.sm.r_vec[
-            np.where(self.sm.r_vec > self.sm.LEN_BOX)] -= self.sm.LEN_BOX
+        self.r_vec[np.where(self.r_vec < 0)] += self.sm.LEN_BOX
+        self.r_vec[np.where(self.r_vec > self.sm.LEN_BOX)] -= self.sm.LEN_BOX
     
     def apply_hbc(self) -> None:
         """ Apply the Hard-Boundary-Conditions algorithm. """
         
         # Particles that passed to the negative side of the boundary
-        where = np.where(self.sm.r_vec - self.sm.RADIUS_PARTICLE < 0)
-        self.sm.r_vec[where] = self.sm.RADIUS_PARTICLE
-        self.sm.v_vec[where] *= -self.sm.RESTITUTION_COEFF
+        whr = np.where(self.r_vec - self.sm.RADIUS_PARTICLE < 0)
+        self.r_vec[whr] = self.sm.RADIUS_PARTICLE
+        self.v_vec[whr] *= -self.sm.RESTITUTION_COEFF
         
         # Particles that passed to the positive side of the boundary
-        where = np.where(
-            self.sm.r_vec + self.sm.RADIUS_PARTICLE > self.sm.LEN_BOX)
-        self.sm.r_vec[where] = self.sm.LEN_BOX - self.sm.RADIUS_PARTICLE
-        self.sm.v_vec[where] *= -self.sm.RESTITUTION_COEFF
+        whr = np.where(self.r_vec + self.sm.RADIUS_PARTICLE > self.sm.LEN_BOX)
+        self.r_vec[whr] = self.sm.LEN_BOX - self.sm.RADIUS_PARTICLE
+        self.v_vec[whr] *= -self.sm.RESTITUTION_COEFF
     
     # ==================================================================
     # ---  Special Events
@@ -177,7 +180,7 @@ class _BaseSimulator(object):
         f = 1
         if t_i:
             f = (temperature / t_i) ** 0.5
-        self.sm.v_vec *= f
+        self.v_vec *= f
     
     # ==================================================================
     # ---  Helper Functions
@@ -187,7 +190,7 @@ class _BaseSimulator(object):
         """ Apply an external field. """
         # TODO: add the option for the user to pass a field.
         if self.sm.GRAVITY:
-            self.sm.v_vec[-1] -= self.sm.GRAVITY_ACCELERATION * self.dt
+            self.v_vec[-1] -= self.sm.GRAVITY_ACCELERATION * self.dt
     
     @property
     def com(self):
@@ -195,7 +198,7 @@ class _BaseSimulator(object):
         if self.sm.PBC:
             log.warning("COM computation not available for PBC yet!")
             return
-        return np.mean(self.sm.r_vec, axis=1)
+        return np.mean(self.r_vec, axis=1)
     
     @property
     def rog(self):
@@ -204,7 +207,7 @@ class _BaseSimulator(object):
         
         # Calculate the separation distance
         # vectors from the centre of mass
-        dr_vecs = np.stack(self.sm.r_vec, axis=-1) - self.com
+        dr_vecs = np.stack(self.r_vec, axis=-1) - self.com
         
         # If the vectors are bigger than half of the
         # box length, reflect the relative distance
@@ -226,7 +229,7 @@ class _BaseSimulator(object):
     
     def update_mean_ke(self):
         """ Update the mean kinetic energy. """
-        vvect = np.stack(self.sm.v_vec, axis=-1)
+        vvect = np.stack(self.v_vec, axis=-1)
         self.mean_ke = 0.5 * self.sm.MASS * inner1d(vvect, vvect).mean()
         return self.mean_ke
     
@@ -248,7 +251,7 @@ class _BaseSimulator(object):
         or 'outside', respectively. """
         
         # Transpose position vector
-        r_vecs = np.stack(self.sm.r_vec, axis=-1)
+        r_vecs = np.stack(self.r_vec, axis=-1)
         
         # Calculate the pairwise separation distance vectors
         dr_vecs = r_vecs[self.p1] - r_vecs[self.p0]
@@ -277,8 +280,7 @@ class _BaseSimulator(object):
         
         self.dists = self.dists[self.pairs_indexes]
         
-        self.drunits = \
-            dr_vecs[self.pairs_indexes] / self.dists[:, np.newaxis]
+        self.drunits = dr_vecs[self.pairs_indexes] / self.dists[:, np.newaxis]
         
         return self.dists
     
@@ -522,18 +524,18 @@ class ContinuousPotentialSolver(_BaseSimulator):
     def algorithm_simple(self):
         """ Simple Verlet Algorithm. """
         # Update position: t + dt
-        self.sm.r_vec += self.sm.v_vec * self.dt
+        self.r_vec += self.v_vec * self.dt
         # Update velocity: t + dt
-        self.sm.v_vec += 0.5 * self.update_acc() * self.dt
+        self.v_vec += 0.5 * self.update_acc() * self.dt
     
     def algorithm_verlet(self):
         """ Verlet Algorithm. """
         # Update velocity: t + dt/2
-        self.sm.v_vec += 0.5 * self.update_acc() * self.dt
+        self.v_vec += 0.5 * self.update_acc() * self.dt
         # Update position: t + dt
-        self.sm.r_vec += self.sm.v_vec * self.dt
+        self.r_vec += self.v_vec * self.dt
         # Update velocity: t + dt
-        self.sm.v_vec += 0.5 * self.update_acc() * self.dt
+        self.v_vec += 0.5 * self.update_acc() * self.dt
     
     def apply_collision_damping(self):
         """ Apply a dissipative force for every particle collision. """
@@ -545,8 +547,8 @@ class ContinuousPotentialSolver(_BaseSimulator):
         #     new_collpairs.append((i, j))
         #     if (i, j) not in self.colliding_pairs:
         #         v_factor = self._e * np.dot(self._FLIPID, dr_unit)
-        #         self.sm.v_vec[:, i] *= v_factor
-        #         self.sm.v_vec[:, j] *= v_factor
+        #         self.v_vec[:, i] *= v_factor
+        #         self.v_vec[:, j] *= v_factor
         # self.colliding_pairs = new_collpairs
     
     def advance(self):
