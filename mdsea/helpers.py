@@ -25,7 +25,6 @@ def nsphere_volume(n, r):
 
 def rgb2unit(rgb: Union[Tuple3, Tuple4]) -> tuple:
     """ Normalize rgb tuples (0 to 255) to unit (0 to 1). """
-    assert len(rgb) in (3, 4)  # TODO(tpvasconcelos) remove this line
     if len(rgb) == 3:
         return tuple(c / 255 for c in rgb)
     return tuple(c / 255 if i < 3 else c for i, c in enumerate(rgb))
