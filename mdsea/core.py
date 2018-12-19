@@ -18,7 +18,6 @@ from mdsea.potentials import Potential
 log = logging.getLogger(__name__)
 log.addHandler(loghandler)
 
-DIR_SIMFILES = f"{os.getcwd()}/simfiles"
 
 
 def _gen_newid() -> str:
@@ -251,10 +250,11 @@ class SysManager(object):
         """
         
         # Check if the main simulations-folder already exists
-        if not os.path.exists(DIR_SIMFILES):
-            os.mkdir(DIR_SIMFILES)
+        dir_simfiles = f"{os.getcwd()}/simfiles"
+        if not os.path.exists(dir_simfiles):
+            os.mkdir(dir_simfiles)
             log.debug("Couldn't find a 'simulations-folder'. "
-                      "A new one was created: %s", DIR_SIMFILES)
+                      "A new one was created: %s", dir_simfiles)
         
         # Create simulation directory tree
         for directory in self.dir_tree:
