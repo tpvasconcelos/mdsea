@@ -26,7 +26,6 @@ def _gen_newid() -> str:
 
 
 class SysManager(object):
-    """ TODO: docstring """
     
     def __init__(self,
                  # SysManager.load() and SysManager.new()

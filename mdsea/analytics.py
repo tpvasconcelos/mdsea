@@ -49,7 +49,6 @@ def make_mp4(fname: str,
 
 
 class Analyser(object):
-    """ TODO: docstring """
     
     def __init__(self, sm: SysManager) -> None:
         self.sm = sm
@@ -79,7 +78,6 @@ class Analyser(object):
 
 
 class Vis(Analyser):
-    """ TODO: docstring """
     
     def __init__(self, sm: SysManager, frame_step: int = 1) -> None:
         super(Vis, self).__init__(sm)

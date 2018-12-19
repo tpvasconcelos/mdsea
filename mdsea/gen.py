@@ -48,7 +48,6 @@ def mb_cdf(mass, temp, k_boltzmann) -> np.ndarray:
 
 
 class _Gen(object):
-    """ TODO: docstring """
     
     def __init__(self, nparticles: int, ndim: int) -> None:
         self.nparticles = nparticles
@@ -77,7 +76,6 @@ class _Gen(object):
 
 
 class VelGen(_Gen):
-    """ TODO: docstring """
     
     def __init__(self, nparticles: int, ndim: int) -> None:
         
@@ -139,7 +137,6 @@ class VelGen(_Gen):
 
 
 class PosGen(_Gen):
-    """ TODO: docstring """
     
     def __init__(self, nparticles: int, ndim: int, boxlen: float) -> None:
         
