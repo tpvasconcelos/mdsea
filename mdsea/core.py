@@ -19,7 +19,6 @@ log = logging.getLogger(__name__)
 log.addHandler(loghandler)
 
 
-
 def _gen_newid() -> str:
     """ Generate new simulation ID. """
     from time import time
