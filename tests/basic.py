@@ -10,14 +10,6 @@ sm = md.SysManager.new(ndim=2, num_particles=6 ** 2, steps=500,
 # Instantiate simulation  ---
 sim = md.ContinuousPotentialSolver(sm)
 
-# Generate initial velocities  ---
-vgen = md.VelGen(ndim=sm.NDIM, nparticles=sm.NUM_PARTICLES)
-sim.v_vec = vgen.mb(sm.MASS, sm.TEMP, sm.K_BOLTZMANN)
-
-# Generate initial positions  ---
-cgen = md.PosGen(ndim=sm.NDIM, nparticles=sm.NUM_PARTICLES, boxlen=sm.LEN_BOX)
-sim.r_vec = cgen.simplecubic()
-
 # Run the simulation  ---
 sim.run_simulation()
 

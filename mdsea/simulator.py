@@ -10,6 +10,7 @@ from numpy.core.umath_tests import inner1d
 from mdsea import loghandler, quicker
 from mdsea.constants import DTYPE
 from mdsea.core import SysManager
+from mdsea.gen import PosGen, VelGen
 from mdsea.helpers import ProgressBar, get_dt
 
 log = logging.getLogger(__name__)
@@ -29,17 +30,19 @@ class _BaseSimulator(object):
         
         self.sm = sm
         
-        # Simulation step (start at zero)
-        self.step = 0
+        # Generate/set initial positions
+        cgen = PosGen(ndim=self.sm.NDIM, boxlen=self.sm.LEN_BOX,
+                      nparticles=self.sm.NUM_PARTICLES)
+        self.r_vec = cgen.simplecubic()
+        
+        # Generate/set initial velocities
+        vgen = VelGen(ndim=self.sm.NDIM, nparticles=self.sm.NUM_PARTICLES)
+        self.v_vec = vgen.mb(sm.MASS, sm.TEMP, sm.K_BOLTZMANN)
         
         # Shortcut for a zeroes array with
         # shape = (NDIM, NUM_PARTICLES)
         self.ndnp_zeroes = np.zeros((self.sm.NDIM, self.sm.NUM_PARTICLES),
                                     dtype=DTYPE)
-
-        # Initial positions and velocities
-        self.r_vec = self.ndnp_zeroes.copy()
-        self.v_vec = self.ndnp_zeroes.copy()
         
         # Updated in update_dists property
         self.dists = None
@@ -58,6 +61,9 @@ class _BaseSimulator(object):
         # Set initial temperature
         self.temp_init = self.sm.TEMP
         self.temp = self.sm.TEMP
+        
+        # Simulation step (start at zero)
+        self.step = 0
         
         # Set integration time interval ("delta-t")
         self.dt = self.sm.DELTA_T
