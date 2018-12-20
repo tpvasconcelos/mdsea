@@ -308,10 +308,14 @@ class _BaseSimulator(object):
         
         return self.acc
     
-    def get_pairs(self, radius: Optional[float], where: str = 'inside') -> zip:
-        """ Returns the pairs, distances, and normalized displacement
-        vectors for particle pairs within a certain cutoff radius."""
-        
+    @property
+    def pairs(self) -> np.array:
+        """ Return pairs within a cutoff. See update_pairs() """
+        return self.all_pairs[self.pairs_indexes]
+    
+    def update_pairs(self, radius: Optional[float] = None,
+                     where: str = 'inside') -> np.array:
+        """ Updates particle pairs within a certain cutoff radius."""
         self.update_dists(radius=radius, where=where)
         
         return zip(self.all_pairs[self.pairs_indexes], self.dists,
@@ -425,7 +429,7 @@ class _BaseSimulator(object):
 #         return False
 #
 #     def hard_sphere(self):
-#         colliding_pairs = self.get_pairs(SIGMA)
+#         colliding_pairs = self.update_pairs(SIGMA)
 #         for i, j in colliding_pairs:
 #             self.separate_colliding_pairs(i, j)
 #             self.apply_hard_sphere_collision(i, j)
@@ -434,7 +438,7 @@ class _BaseSimulator(object):
 #         # apply Hard Sphere First
 #         self.hard_sphere()
 #         if self.step != 0:
-#             for pair in self.get_pairs(R_SQUAREWELL * SIGMA):
+#             for pair in self.update_pairs(R_SQUAREWELL * SIGMA):
 #                 i, j = pair[0], pair[1]
 #                 if self.pair_did_not_actually_leave_the_well(i, j):
 #                     """This means that, if the particle was about to leave the well
@@ -464,7 +468,7 @@ class _BaseSimulator(object):
 #
 #     def top_hat(self):
 #         # Penetrable Sphere
-#         for i, j in self.get_pairs(SIGMA):
+#         for i, j in self.update_pairs(SIGMA):
 #             if self.pair_did_not_actually_leave_inside_particle(i, j):
 #                 # TODO: Fix this ugly fix...
 #                 continue
@@ -475,11 +479,11 @@ class _BaseSimulator(object):
 #             if (i, j) in self.pairs_already_inside_the_particle:
 #                 self.apply_top_hat_repulsion(i, j)
 #                 self.going_where_from_inside_particle[(i, j)] = 1  # OUT
-#         self.pairs_already_inside_the_particle = self.get_pairs(
+#         self.pairs_already_inside_the_particle = self.update_pairs(
 #             SIGMA)
 #
 #         # Entering and exiting the well
-#         for i, j in self.get_pairs(R_SQUAREWELL * SIGMA):
+#         for i, j in self.update_pairs(R_SQUAREWELL * SIGMA):
 #             if self.pair_did_not_actually_leave_inside_particle(i, j):
 #                 # TODO: Fix this ugly fix...
 #                 # This means that, if the particle was about to leave the well
@@ -500,7 +504,7 @@ class _BaseSimulator(object):
 #                 # out if they can pass over the potential step!
 #                 self.apply_square_well_attraction(i, j)
 #                 self.going_where_from_well[(i, j)] = 1  # OUT
-#         self.pairs_already_inside_the_well = self.get_pairs(
+#         self.pairs_already_inside_the_well = self.update_pairs(
 #             R_SQUAREWELL * SIGMA)
 
 
@@ -546,8 +550,8 @@ class ContinuousPotentialSolver(_BaseSimulator):
         pass
         # TODO: review this whole method!
         # new_collpairs = []
-        # collpairs = self.get_pairs(2 * self.sm.RADIUS_PARTICLE)
-        # for (i, j), dist, dr_unit in collpairs:
+        # self.update_pairs(2 * self.sm.RADIUS_PARTICLE)
+        # for (i, j), dist, dr_unit in zip(self.pairs, self.dists, self.drunits):
         #     new_collpairs.append((i, j))
         #     if (i, j) not in self.colliding_pairs:
         #         v_factor = self._e * np.dot(self._FLIPID, dr_unit)
