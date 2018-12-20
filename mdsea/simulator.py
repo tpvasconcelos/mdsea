@@ -97,34 +97,31 @@ class _BaseSimulator(object):
         # ---
         self.colliding_pairs = list()
         
-        # Defined in ._init_pairs()
-        self.true_matrix = None
-        self.all_pairs = None
-        self.p0 = None
-        self.p1 = None
-    
-    def _init_pairs(self):
+        # ==============================================================
+        # ---  Init Pairs
+        # ==============================================================
+        
         # Generate all possible combinations of particle pairs.
         # It is straight forward to use itertools for this.
         # Then, we transform the itertools.combinations
         # object into a numpy ndarray. Not perfect...
         # numpy.fromiter is way too slow for large
         # iterables. Need a better way to do this
-        cnt = self.sm.NUM_PARTICLES * (self.sm.NUM_PARTICLES - 1)
         self.all_pairs = np.fromiter(
             chain.from_iterable(combinations(range(self.sm.NUM_PARTICLES), 2)),
-            count=cnt, dtype=np.int32).reshape(-1, 2)
+            count=self.sm.NUM_PARTICLES * (self.sm.NUM_PARTICLES - 1),
+            dtype=np.int32).reshape(-1, 2)
         # shortcuts
-        self.p0 = self.all_pairs[:, 0]
-        self.p1 = self.all_pairs[:, 1]
+        self._ap_0 = self.all_pairs[:, 0]
+        self._ap_1 = self.all_pairs[:, 1]
         # set of indices
-        self.p0set = np.fromiter(set(self.p0), dtype=int)
-        self.p1set = np.fromiter(set(self.p1), dtype=int)
+        self._ap_0set = np.fromiter(set(self._ap_0), dtype=int)
+        self._ap_1set = np.fromiter(set(self._ap_1), dtype=int)
+        # all_pairs1 sorted
+        self._ap_1sort = np.sort(self._ap_1)
+        self._ap_1argsort = np.argsort(self._ap_1)
         # True matrix
         self.true_matrix = np.repeat(True, self.all_pairs.shape[0])
-        # p1 sorted
-        self.p1sort = np.sort(self.p1)
-        self.p1argsort = np.argsort(self.p1)
     
     # ==================================================================
     # ---  File Management
@@ -183,7 +180,7 @@ class _BaseSimulator(object):
     
     def _quench(self, temperature: float) -> None:
         t_i = self.update_temp()
-        f = 1
+        f = 1.
         if t_i:
             f = (temperature / t_i) ** 0.5
         self.v_vec *= f
@@ -207,7 +204,7 @@ class _BaseSimulator(object):
         return np.mean(self.r_vec, axis=1)
     
     @property
-    def rog(self):
+    def rog(self) -> float:
         """ Radius of gyration. Mathematically expressed as the
         root-mean-squared of the distances to the centre-of-mass. """
         
@@ -224,34 +221,34 @@ class _BaseSimulator(object):
         # Root-mean-squared of the distances to the centre-of-mass
         return np.sqrt(np.mean(quicker.norm(dr_vecs, axis=1) ** 2))
     
-    def update_temp(self):
+    def update_temp(self) -> Optional[float]:
         """ Update the system's temperature. """
         if self.mean_ke is None:
             log.warning("Cannot update the temperature without first"
                         " evaluating the mean kinetic energy.")
-            return
+            return None
         self.temp = (2 / 3) * self.mean_ke / self.sm.K_BOLTZMANN
         return self.temp
     
-    def update_mean_ke(self):
+    def update_mean_ke(self) -> np.array:
         """ Update the mean kinetic energy. """
         vvect = np.stack(self.v_vec, axis=-1)
         self.mean_ke = 0.5 * self.sm.MASS * inner1d(vvect, vvect).mean()
         return self.mean_ke
     
-    def update_mean_pe(self):
+    def update_mean_pe(self) -> np.array:
         """ Update the mean potential energy. """
         self.mean_pe = np.add.reduce(self.sm.POT.potential(self.dists)) \
                        / self.sm.NUM_PARTICLES
         return self.mean_pe
     
-    def update_energies(self):
+    def update_energies(self) -> None:
         """ Update the mean kinetic and potential energies. """
         self.update_mean_pe()
         self.update_mean_ke()
     
     def update_dists(self, radius: Optional[float] = None,
-                     where: str = 'inside'):
+                     where: str = 'inside') -> np.array:
         """ Get the pairs inside/outside a given radial distance (cutoff
          radius), where the 'where' parameter has to be either  'inside'
         or 'outside', respectively. """
@@ -260,7 +257,7 @@ class _BaseSimulator(object):
         r_vecs = np.stack(self.r_vec, axis=-1)
         
         # Calculate the pairwise separation distance vectors
-        dr_vecs = r_vecs[self.p1] - r_vecs[self.p0]
+        dr_vecs = r_vecs[self._ap_1] - r_vecs[self._ap_0]
         
         # If the vectors are bigger than half of the
         # box length, reflect the relative distance
@@ -290,7 +287,7 @@ class _BaseSimulator(object):
         
         return self.dists
     
-    def update_acc(self, radius: float = None):
+    def update_acc(self, radius: float = None) -> np.array:
         """ Returns (and/or update) the acceleration vectors for
         particles under a given pairwise potential force and within a
         certain cutoff radius. """
@@ -301,11 +298,12 @@ class _BaseSimulator(object):
         
         self.acc = self.ndnp_zeroes.copy()
         
-        self.acc[:, self.p0set] += np.array(
-            [np.bincount(self.p0, acc[:, i]) for i in range(self.sm.NDIM)])
+        self.acc[:, self._ap_0set] += np.array(
+            [np.bincount(self._ap_0, acc[:, i])
+             for i in range(self.sm.NDIM)])
         
-        self.acc[:, self.p1set] -= np.array(
-            [np.bincount(self.p1sort, acc[self.p1argsort][:, i])
+        self.acc[:, self._ap_1set] -= np.array(
+            [np.bincount(self._ap_1sort, acc[self._ap_1argsort][:, i])
              for i in range(self.sm.NDIM)])[:, 1:]
         
         return self.acc

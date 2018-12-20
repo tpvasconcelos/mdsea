@@ -93,11 +93,11 @@ class ProgressBar(object):
         self.prefix = f"ProgressBar ({self.name}):"
         
         self.percentage = 0
-        self._timespercycle = []
+        self._timespercycle = list()
         self.t_lastcycle = time()
         
         self.tstart = time()
-        self.tfinish = None
+        self.tfinish = 0
     
     def set_start(self, t: Optional[float] = None) -> None:
         if not t:
@@ -112,7 +112,7 @@ class ProgressBar(object):
         self.log.debug("%s %s", self.prefix, {'end-time': self.tfinish})
     
     def get_duration(self, ndigits: int = 1) -> float:
-        if self.tfinish is None:
+        if not self.tfinish:
             self.log.warning(
                 "You forgot to finish the '%s' ProgressBar! "
                 "Setting the finished time now.", self.name)

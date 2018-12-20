@@ -39,7 +39,7 @@ SUPPRESSED_MODULES = ('matplotlib',
 
 
 def _setup_logging(format_file, format_stout, level, filename,
-                   maxbytes, suppress):
+                   maxbytes, suppress) -> 'RotatingFileHandler':
     """ Setup mdsea's logging. """
     import logging
     import os
