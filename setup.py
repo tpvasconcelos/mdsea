@@ -15,7 +15,7 @@ LONG_DESCRIPTION = 'mdsea is a stand-alone Python molecular dynamics ' \
                    'beautiful visualization in 1, 2, and 3 dimensions.'
 
 setup(name='mdsea',
-      version='0.01',
+      version='0.1',
 
       description='Molecular Dynamics Library',
       long_description=LONG_DESCRIPTION,
