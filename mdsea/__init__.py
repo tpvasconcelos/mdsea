@@ -25,6 +25,7 @@ on the top of the module right after imports. Do as follows:
 # ---  Setup logging
 # ======================================================================
 from mdsea.constants.fileman import DIR_SIMFILES
+from logging.handlers import RotatingFileHandler
 
 LOG_LEVEL = 20  # logging.INFO
 LOGFILE_MAXBYTES = 500000  # 500 kB
@@ -39,11 +40,10 @@ SUPPRESSED_MODULES = ('matplotlib',
 
 
 def _setup_logging(format_file, format_stout, level, filename,
-                   maxbytes, suppress) -> 'RotatingFileHandler':
+                   maxbytes, suppress) -> RotatingFileHandler:
     """ Setup mdsea's logging. """
     import logging
     import os
-    from logging.handlers import RotatingFileHandler
     
     # Suppress logging from other libraries by
     # setting their logging level to CRITICAL
@@ -67,12 +67,15 @@ def _setup_logging(format_file, format_stout, level, filename,
     return handler
 
 
-loghandler = _setup_logging(LOG_FORMAT_FILE, LOG_FORMAT_STOUT,
-                            LOG_LEVEL, LOGFILE_NAME,
-                            LOGFILE_MAXBYTES, SUPPRESSED_MODULES)
+loghandler: RotatingFileHandler = _setup_logging(LOG_FORMAT_FILE,
+                                                 LOG_FORMAT_STOUT,
+                                                 LOG_LEVEL, LOGFILE_NAME,
+                                                 LOGFILE_MAXBYTES,
+                                                 SUPPRESSED_MODULES)
 
 # Clean up
 del DIR_SIMFILES, LOG_LEVEL, LOG_FORMAT_STOUT, LOGFILE_NAME, LOGFILE_MAXBYTES
+del RotatingFileHandler
 
 # ======================================================================
 # ---  Imports

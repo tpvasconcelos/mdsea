@@ -71,7 +71,7 @@ class SysManager(object):
         # ==============================================================
         
         # Settings dictionary (we'll save this to a file)
-        self._settings = dict()
+        self._settings: dict = dict()
         
         # Logging stuff  ---
         

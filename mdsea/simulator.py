@@ -44,10 +44,9 @@ class _BaseSimulator(object):
         self.ndnp_zeroes = np.zeros((self.sm.NDIM, self.sm.NUM_PARTICLES),
                                     dtype=DTYPE)
         
-        # Updated in update_dists property
-        self.dists = None
-        self.drunits = None
-        self.pairs_indexes = None
+        self.dists: np.ndarray = None
+        self.drunits: np.ndarray = None
+        self.pairs_indexes: np.ndarray = None
         
         # Acceleration vectors (defined in property)
         self.acc = self.ndnp_zeroes.copy()
@@ -89,13 +88,13 @@ class _BaseSimulator(object):
         # Legend:
         # zero (0) stands for: "GOING IN"
         # one (1) stands for: "GOING OUT"
-        self.going_where_from_well = dict()
-        self.going_where_from_inside_particle = dict()
+        self.going_where_from_well: dict = dict()
+        self.going_where_from_inside_particle: dict = dict()
         # ---
-        self.pairs_already_inside_the_well = list()
-        self.pairs_already_inside_the_particle = list()
+        self.pairs_already_inside_the_well: list = list()
+        self.pairs_already_inside_the_particle: list = list()
         # ---
-        self.colliding_pairs = list()
+        self.colliding_pairs: list = list()
         
         # ==============================================================
         # ---  Init Pairs
@@ -230,13 +229,13 @@ class _BaseSimulator(object):
         self.temp = (2 / 3) * self.mean_ke / self.sm.K_BOLTZMANN
         return self.temp
     
-    def update_mean_ke(self) -> np.array:
+    def update_mean_ke(self) -> np.ndarray:
         """ Update the mean kinetic energy. """
         vvect = np.stack(self.v_vec, axis=-1)
         self.mean_ke = 0.5 * self.sm.MASS * inner1d(vvect, vvect).mean()
         return self.mean_ke
     
-    def update_mean_pe(self) -> np.array:
+    def update_mean_pe(self) -> np.ndarray:
         """ Update the mean potential energy. """
         self.mean_pe = np.add.reduce(self.sm.POT.potential(self.dists)) \
                        / self.sm.NUM_PARTICLES
@@ -248,7 +247,7 @@ class _BaseSimulator(object):
         self.update_mean_ke()
     
     def update_dists(self, radius: Optional[float] = None,
-                     where: str = 'inside') -> np.array:
+                     where: str = 'inside') -> np.ndarray:
         """ Get the pairs inside/outside a given radial distance (cutoff
          radius), where the 'where' parameter has to be either  'inside'
         or 'outside', respectively. """
@@ -287,7 +286,7 @@ class _BaseSimulator(object):
         
         return self.dists
     
-    def update_acc(self, radius: float = None) -> np.array:
+    def update_acc(self, radius: float = None) -> np.ndarray:
         """ Returns (and/or update) the acceleration vectors for
         particles under a given pairwise potential force and within a
         certain cutoff radius. """
@@ -309,12 +308,12 @@ class _BaseSimulator(object):
         return self.acc
     
     @property
-    def pairs(self) -> np.array:
+    def pairs(self) -> np.ndarray:
         """ Return pairs within a cutoff. See update_pairs() """
         return self.all_pairs[self.pairs_indexes]
     
     def update_pairs(self, radius: Optional[float] = None,
-                     where: str = 'inside') -> np.array:
+                     where: str = 'inside') -> np.ndarray:
         """ Updates particle pairs within a certain cutoff radius."""
         self.update_dists(radius=radius, where=where)
         
@@ -573,11 +572,6 @@ class ContinuousPotentialSolver(_BaseSimulator):
         """ Run simulation. """
         
         simrange = range(self.step, self.sm.STEPS)
-        
-        # _init_pairs is slow so we only
-        # call it if we really need it
-        if len(simrange) > 0 and self.all_pairs is None:
-            self._init_pairs()
         
         # Make sure that we update
         # the files at least once

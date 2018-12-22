@@ -96,12 +96,10 @@ class Potential(object):
         self.pf = potential
         
         # Is it a step-potential?
-        self.step = step
+        self.is_step = step
         
         # kwargs stuff
-        self.kwargs = kwargs
-        if self.kwargs is None:
-            self.kwargs = dict()
+        self.kwargs: dict = kwargs if kwargs is not None else dict()
     
     # ==================================================================
     # ---  OOTB Potentials (class methods)

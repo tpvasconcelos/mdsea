@@ -93,11 +93,11 @@ class ProgressBar(object):
         self.prefix = f"ProgressBar ({self.name}):"
         
         self.percentage = 0
-        self._timespercycle = list()
+        self._timespercycle: list = list()
         self.t_lastcycle = time()
         
         self.tstart = time()
-        self.tfinish = 0
+        self.tfinish = 0.
     
     def set_start(self, t: Optional[float] = None) -> None:
         if not t:
@@ -105,10 +105,11 @@ class ProgressBar(object):
         self.tstart = t
         self.log.debug("%s %s", self.prefix, {'start-time': self.tstart})
     
-    def set_finish(self, tfinish: Optional[float] = None) -> None:
-        if not tfinish:
-            tfinish = time()
-        self.tfinish = tfinish
+    def set_finish(self, t: float = 0.) -> None:
+        """ Set the finishing time in seconds since the Epoch. """
+        if not t:
+            t = time()
+        self.tfinish = t
         self.log.debug("%s %s", self.prefix, {'end-time': self.tfinish})
     
     def get_duration(self, ndigits: int = 1) -> float:

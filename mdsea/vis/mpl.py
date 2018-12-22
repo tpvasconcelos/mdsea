@@ -7,7 +7,7 @@ matplotlib visualizations and animations.
 """
 
 import logging
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import matplotlib
 
@@ -16,6 +16,7 @@ try:
 except ValueError:
     matplotlib.interactive(True)
 
+from matplotlib.collections import PathCollection
 import matplotlib.cm as cm
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
@@ -177,14 +178,14 @@ class Animation(MPL):
         self.fig, self.ax = plt.subplots(figsize=figsize)
         
         self.dflt_clr = color
-        self.draw_wells = None
+        self.draw_wells = False
         self.scatter = scatter
         
         # ==============================================================
         # ---  Axes.scatter settings
         # ==============================================================
         
-        self.ax_scatter = None
+        self.ax_scatter: PathCollection = None
         # This makes sure that the markersize is somewhat
         # representative of the actual particle diameter
         if self.sm.NDIM == 1:
@@ -234,15 +235,14 @@ class Animation(MPL):
         return self.ax_scatter,
     
     def _plt_particles_scatter(self, step: int) -> None:
-        clr = self.dflt_clr
+        clr: Union[str, List] = self.dflt_clr
         if self.colorspeed:
             clr = self.colors[step]
         self.ax_scatter.set_offsets(self.r_vecs[step])
         self.ax_scatter.set_facecolor(clr)
     
     def _plt_particles_circles(self, step: int) -> None:
-        clr = self.dflt_clr
-        
+        clr: Union[str, Tuple] = self.dflt_clr
         for i in range(self.sm.NUM_PARTICLES):
             if self.colorspeed:
                 clr = self.colors[step][i]
