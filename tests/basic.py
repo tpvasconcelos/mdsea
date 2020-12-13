@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3
 # coding: utf-8
-from tests import mdsea as md
+import mdsea as md
 
 # Instantiate system manager  ---
 sm = md.SysManager.new(ndim=2, num_particles=6 ** 2, steps=500,

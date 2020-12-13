@@ -1,7 +1,7 @@
 #!/usr/local/bin/python3
 # coding: utf-8
 from mdsea.vis.blender import BlenderAnimation
-from tests import mdsea as md
+import mdsea as md
 
 FRAME_STEP = 5
 

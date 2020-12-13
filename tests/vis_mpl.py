@@ -1,7 +1,7 @@
 #!/usr/local/bin/python3
 # coding: utf-8
 from mdsea.vis.mpl import Animation
-from tests import mdsea as md
+import mdsea as md
 
 FRAME_STEP = 5
 

@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3
 # coding: utf-8
-from tests import mdsea as md
+import mdsea as md
 
 # Calculate the 'number of steps'  ---
 SECONDS = 1
