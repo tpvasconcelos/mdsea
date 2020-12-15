@@ -393,7 +393,7 @@ class BlenderAnimation(Vis):
     
     # noinspection PyCallByClass,PyTypeChecker
     @staticmethod
-    def render(opengl: bool = False, ) -> None:
+    def render(opengl: bool = False) -> None:
         """ Render animation. """
         if opengl:
             bpy.ops.render.opengl(animation=True)

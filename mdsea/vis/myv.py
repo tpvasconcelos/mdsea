@@ -6,6 +6,7 @@ from mayavi import mlab
 
 from mdsea import loghandler
 from mdsea.analytics import SysManager, Vis
+from mdsea.vis.mpl import speed2color
 
 log = logging.getLogger(__name__)
 log.addHandler(loghandler)
@@ -21,8 +22,8 @@ class MayaviAnimation(Vis):
         figure.scene.disable_render = True
         
         for i in range(self.sm.NUM_PARTICLES):
-            mlab.points3d(self.x[0][i], self.y[0][i], self.z[0][i],
-                          color=self.color(self.speeds[0][i], alpha=False),
+            mlab.points3d(self.r_vecs[0][i][0], self.r_vecs[0][i][1], self.r_vecs[0][i][1],
+                          color=speed2color(speed=self.speeds[0][i], speed_limit=self.maxspeed, alpha=False),
                           resolution=8 * 3)
         
         # Every object has been created, we can reenable the rendering.

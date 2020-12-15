@@ -1,12 +1,14 @@
 #!/usr/local/bin/python
 # coding: utf-8
 import logging
+import time
 
 from PIL.ImageGrab import grab
-from vpython import *
+from vpython import scene, vector, sphere
 
 from mdsea import loghandler
 from mdsea.analytics import SysManager, Vis
+from mdsea.vis.mpl import speed2color
 
 log = logging.getLogger(__name__)
 log.addHandler(loghandler)
@@ -37,26 +39,26 @@ class VpythonAnimation(Vis):
     def initialize(self):
         
         for i in range(self.sm.NUM_PARTICLES):
-            clr = vector(*self.color(self.speeds[0][i], alpha=False))
-            p = sphere(pos=vector(self.y[0][i], self.z[0][i], self.x[0][i]),
+            clr = vector(*speed2color(speed=self.speeds[0][i], speed_limit=self.maxspeed, alpha=False))
+            p = sphere(pos=vector(self.r_vecs[0][i][1], self.r_vecs[0][i][2], self.r_vecs[0][i][0]),
                        color=clr, radius=self.sm.RADIUS_PARTICLE)
             self.particles.append(p)
     
     def render_frame(self, step):
         for i in range(self.sm.NUM_PARTICLES):
             # Update position
-            self.particles[i].pos = vector(self.y[step][i],
-                                           self.z[step][i],
-                                           self.x[step][i])
+            self.particles[i].pos = vector(self.r_vecs[step][i][1],
+                                           self.r_vecs[step][i][2],
+                                           self.r_vecs[step][i][0])
             # Update color
             self.particles[i].color = \
-                vector(*self.color(self.speeds[step][i], alpha=False))
+                vector(*speed2color(speed=self.speeds[step][i], speed_limit=self.maxspeed, alpha=False))
     
     def run(self, export: bool = False):
         if export:
             input("[!] Position scene at top left corner of your screen. "
                   "Once you're done, hit 'Enter'.")
-            
+
             time.sleep(1)
         n = 1
         for step in range(self.sm.STEPS):
@@ -65,5 +67,6 @@ class VpythonAnimation(Vis):
                     time.sleep(0.5)
                     grab(self.scene_box).save(
                         "{}/img{:06}.png".format(self.sm.png_path, n))
+                time.sleep(1/24.)
                 self.render_frame(step)
                 n += 1

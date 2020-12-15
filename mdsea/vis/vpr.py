@@ -1,12 +1,11 @@
-#!/usr/local/bin/python
-# coding: utf-8
 import logging
 
-from vapory import *
+from vapory import Scene, Camera, Radiosity, Background, LightSource, Sphere,Texture,Pigment
 
 from mdsea import loghandler
 from mdsea.analytics import SysManager, Vis
 from mdsea.helpers import rgb2unit
+from mdsea.vis.mpl import speed2color
 
 log = logging.getLogger(__name__)
 log.addHandler(loghandler)
@@ -67,10 +66,10 @@ class VaporyAnimation(Vis):
         
         particles = []
         for i in range(self.sm.NUM_PARTICLES):
-            clr = self.color(self.speeds[0][i], alpha=False)
-            p = Sphere([self.y[step][i],
-                        self.z[step][i],
-                        self.x[step][i]],
+            clr = speed2color(speed=self.speeds[step][i], speed_limit=self.maxspeed, alpha=False)
+            p = Sphere([self.r_vecs[step][i][1],
+                        self.r_vecs[step][i][2],
+                        self.r_vecs[step][i][0]],
                        self.sm.RADIUS_PARTICLE,
                        Texture(Pigment('color', clr)))
             particles.append(p)

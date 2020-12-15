@@ -32,10 +32,15 @@ log = logging.getLogger(__name__)
 log.addHandler(loghandler)
 
 
-def speed2color(cmap: Colormap, speed: float, speed_limit: float,
+def speed2color(speed: float, speed_limit: float, cmap: Colormap = None,
                 alpha: bool = True) -> tuple:
     """ Transform a speed into a rgb (or rgba) color. """
     # TODO: vectorize this s.t. 'speed' can be an array
+    if cmap is None:
+        # DIVERGING -> ['coolwarm', 'RdBu_r', 'jet']
+        # SEQUENTIAL -> ['gist_heat', 'autumn', 'hot']
+        num_colors = 256 / 2
+        cmap = cm.get_cmap(name='autumn', lut=num_colors)
     # speed_ratio = round(cmap.N * speed / speed_limit)
     speed_ratio = cmap.N - int(cmap.N * speed / speed_limit)
     if cmap.name != 'autumn':
@@ -310,14 +315,8 @@ class Animation(MPL):
         if self.colorspeed:
             self._colors_init()
     
-    def _colors_init(self, cmap: Optional[Colormap] = None):
-        if cmap is None:
-            # DIVERGING -> ['coolwarm', 'RdBu_r', 'jet']
-            # SEQUENTIAL -> ['gist_heat', 'autumn', 'hot']
-            num_colors = 256 / 2
-            cmap = cm.get_cmap(name='autumn', lut=num_colors)
-        
-        self.colors = [[speed2color(cmap, s, self.maxspeed) for s in ss]
+    def _colors_init(self):
+        self.colors = [[speed2color(speed=s, speed_limit=self.maxspeed) for s in ss]
                        for ss in self.speeds]
     
     # ==================================================================
@@ -371,7 +370,7 @@ class Animation(MPL):
         spf = int(1000 * (1 / 24))
         
         # noinspection PyTypeChecker,PyUnusedLocal
-        anim = animation.FuncAnimation(
+        animation.FuncAnimation(
             fig=self.fig, func=self._update_animloop,
             frames=np.arange(0, self.sm.STEPS - 1, self.frame_step),
             interval=spf, blit=True, init_func=self._scatter_init,
