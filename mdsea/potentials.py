@@ -1,15 +1,10 @@
-#!/usr/local/bin/python
-# coding: utf-8
 import logging
 from typing import Callable, Optional
 
 import numpy as np
 from scipy import optimize
 
-from mdsea import loghandler
-
 log = logging.getLogger(__name__)
-log.addHandler(loghandler)
 
 
 #######################################
@@ -72,81 +67,81 @@ def ff_ideal(r, **kwargs):
 # ----------------------------------------------------------------------
 
 
-class Potential(object):
-    def __init__(self,
-                 force: Optional[Callable],
-                 potential: Optional[Callable],
-                 step: bool = False,
-                 kwargs: Optional[dict] = None) -> None:
+class Potential:
+    def __init__(
+        self,
+        force: Optional[Callable],
+        potential: Optional[Callable],
+        step: bool = False,
+        kwargs: Optional[dict] = None,
+    ) -> None:
         """
         If no arguments are passed, this will
          e an ideal gas potential by default.
-        
+
         :param force: potential force function.
         :param potential: potential function.
         :param step: Is it a step (discontinuous) potential function?
         :param kwargs: kwargs for the potential and force functions.
-        
+
         """
-        
+
         # Force function (Callable)
         self.ff = force
-        
+
         # Potential function (Callable)
         self.pf = potential
-        
+
         # Is it a step-potential?
         self.is_step = step
-        
+
         # kwargs stuff
-        self.kwargs: dict = kwargs if kwargs is not None else dict()
-    
+        self.kwargs: dict = kwargs if kwargs is not None else {}
+
     # ==================================================================
     # ---  OOTB Potentials (class methods)
     # ==================================================================
-    
+
     @classmethod
-    def ideal(cls) -> 'Potential':
+    def ideal(cls) -> "Potential":
         return cls(force=ff_ideal, potential=pf_ideal)
-    
+
     @classmethod
-    def boundedmie(cls, a, epsilon, sigma, m, n) -> 'Potential':
+    def boundedmie(cls, a, epsilon, sigma, m, n) -> "Potential":
         kwargs = dict(a=a, epsilon=epsilon, sigma=sigma, m=m, n=n)
         return cls(force=ff_boundedmie, potential=pf_boundedmie, kwargs=kwargs)
-    
+
     @classmethod
-    def mie(cls, epsilon, sigma, m, n) -> 'Potential':
+    def mie(cls, epsilon, sigma, m, n) -> "Potential":
         kwargs = dict(epsilon=epsilon, sigma=sigma, m=m, n=n)
         return cls(force=ff_mie, potential=pf_mie, kwargs=kwargs)
-    
+
     @classmethod
-    def lennardjones(cls, epsilon, sigma) -> 'Potential':
+    def lennardjones(cls, epsilon, sigma) -> "Potential":
         kwargs = dict(epsilon=epsilon, sigma=sigma)
-        return cls(force=ff_lennardjones, potential=pf_lennardjones,
-                   kwargs=kwargs)
-    
+        return cls(force=ff_lennardjones, potential=pf_lennardjones, kwargs=kwargs)
+
     # ==================================================================
     # ---  Public methods
     # ==================================================================
-    
+
     def potential(self, r):
         """ Evaluate and return the potential function at r. """
         return self.pf(r, **self.kwargs)
-    
+
     def force(self, r):
         """ Evaluate and return the force function at r. """
         return self.ff(r, **self.kwargs)
-    
+
     def potminimum(self, xtol: float = 1e-8):
         """
         Get potential minimum / Equilibrium distance / Force's zero
-        
+
         Parameters (from scipy.optimize.fmin)
         ----------
         xtol : float, optional
             Absolute error in xopt between iterations that is acceptable
             for convergence.
-        
+
         """
-        return optimize.fmin(self.pf, 0.5, tuple(self.kwargs.values()),
-                             xtol=xtol, disp=False)[0]
+        return optimize.fmin(self.pf, 0.5, tuple(self.kwargs.values()), xtol=xtol, disp=False)[0]

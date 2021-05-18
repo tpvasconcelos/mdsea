@@ -41,7 +41,7 @@ venv-init: clean-venv ## create a virtual environment
 .PHONY: install
 install: clean ## install the package in editable mode and install all pre-commit hooks
 	.venv/bin/pip install --upgrade pip
-	.venv/bin/pip install -e ".[dev,matplotlib]"
+	.venv/bin/pip install -e ".[dev,matplotlib,vapory,vpython,mayavi]"
 	.venv/bin/pip install -U pre-commit
 	.venv/bin/pre-commit install --install-hooks --overwrite
 

@@ -1,21 +1,52 @@
-#!/usr/local/bin/python
-# coding: utf-8
 import logging
 import math
 import statistics as stats
+from logging.handlers import RotatingFileHandler
 from time import time
 from typing import Any, Callable, Optional, Sequence, Tuple, Union
 
+from mdsea.constants.fileman import DIR_SIMFILES
 from scipy.special import gamma
 
-from mdsea import loghandler
-
-log = logging.getLogger(__name__)
-log.addHandler(loghandler)
+logger = logging.getLogger(__name__)
 
 # Useful shortcuts for typechecking rgb and rgba tuples
 Tuple3 = Tuple[float, float, float]
 Tuple4 = Tuple[float, float, float, float]
+
+
+def setup_logging(
+    format_file="%(asctime)s - [%(levelname)s:%(name)s] %(message)s",
+    format_stout="[%(levelname)s:%(name)s] %(message)s",
+    level=logging.INFO,
+    filename=f"{DIR_SIMFILES}/_mdsea_logdump.log",
+    maxbytes=500000,  # 500 kB
+) -> None:
+    """Helper to setup logging."""
+    import logging
+    import os
+
+    looger_root = logging.getLogger("mdsea")
+    looger_root.setLevel(level=level)
+
+    # SUPPRESSED_MODULES = ("matplotlib", "apptools", "asyncio", "mayavi", "pyface")
+
+    # Set StreamHandler
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter(fmt=format_stout))
+    handler.setLevel(level=level)
+    looger_root.addHandler(handler)
+
+    # Check if the directory where the log will live exists
+    _dir = "/".join(filename.split("/")[:-1])
+    if not os.path.exists(_dir):
+        os.mkdir(_dir)
+
+    # Set RotatingFileHandler
+    handler = RotatingFileHandler(filename, maxBytes=maxbytes, backupCount=1)
+    handler.setFormatter(fmt=logging.Formatter(format_file))
+    handler.setLevel(level=level)
+    looger_root.addHandler(handler)
 
 
 def nsphere_volume(n, r):
@@ -33,16 +64,14 @@ def rgb2unit(rgb: Union[Tuple3, Tuple4]) -> tuple:
 def check_val(name: str, val: Any, options: Tuple[Any, ...]) -> None:
     """ Check variable value. """
     if val not in options:
-        msg = f"Illegal value ({val}) for {name}. " \
-            f"It should be one of: {options}"
+        msg = f"Illegal value ({val}) for {name}. " f"It should be one of: {options}"
         raise ValueError(msg)
 
 
 def check_type(name: str, val: Any, target_types: Tuple[type, ...]) -> None:
     """ Check variable type. """
     if type(val) not in target_types:
-        msg = f"Illegal type ({type(val)}) for {name}. " \
-            f"It should be one of: {target_types}"
+        msg = f"Illegal type ({type(val)}) for {name}. " f"It should be one of: {target_types}"
         raise TypeError(msg)
 
 
@@ -51,19 +80,17 @@ def check_size(names: Tuple[str, ...], vals: Tuple[Sequence, ...]) -> None:
     l1 = len(vals[0])
     for v in vals:
         if len(v) != l1:
-            msg = "The following variables all " \
-                f"need to be the same length: {names}"
+            msg = "The following variables all " f"need to be the same length: {names}"
             raise ValueError(msg)
 
 
-def get_dt(radius: float, mean_speed: float,
-           drpf: float = 0.01) -> float:
+def get_dt(radius: float, mean_speed: float, drpf: float = 0.01) -> float:
     """
     Generate a delta time (dt, time-step, etc) based on a
     given 'displacement ratio per frame' (defined bellow).
-    
+
     @:param drpf "Displacement ratio per frame"
-    
+
     """
     if mean_speed == 0:
         mean_speed = 1
@@ -73,85 +100,79 @@ def get_dt(radius: float, mean_speed: float,
 
 def get_memory() -> dict:
     """ Returns full memory info. """
-    import psutil
     import os
+
+    import psutil
+
     proc = psutil.Process(os.getpid())
     return proc.memory_info()
 
 
-class ProgressBar(object):
-    
-    def __init__(self, name: str, stop: int,
-                 loggername: str = __name__,
-                 step: int = 10) -> None:
-        
+class ProgressBar:
+    def __init__(self, name: str, stop: int, loggername: str = __name__, step: int = 10) -> None:
+
         self.name = name
         self.stop = stop
         self.step = step
         self.log = logging.getLogger(loggername)
-        
+
         self.prefix = f"ProgressBar ({self.name}):"
-        
+
         self.percentage = 0
-        self._timespercycle: list = list()
+        self._timespercycle: list = []
         self.t_lastcycle = time()
-        
+
         self.tstart = time()
-        self.tfinish = 0.
-    
+        self.tfinish = 0.0
+
     def set_start(self, t: Optional[float] = None) -> None:
         if not t:
             t = time()
         self.tstart = t
-        self.log.debug("%s %s", self.prefix, {'start-time': self.tstart})
-    
-    def set_finish(self, t: float = 0.) -> None:
+        self.log.debug("%s %s", self.prefix, {"start-time": self.tstart})
+
+    def set_finish(self, t: float = 0.0) -> None:
         """ Set the finishing time in seconds since the Epoch. """
         if not t:
             t = time()
         self.tfinish = t
-        self.log.debug("%s %s", self.prefix, {'end-time': self.tfinish})
-    
+        self.log.debug("%s %s", self.prefix, {"end-time": self.tfinish})
+
     def get_duration(self, ndigits: int = 1) -> float:
         if not self.tfinish:
-            self.log.warning(
-                "You forgot to finish the '%s' ProgressBar! "
-                "Setting the finished time now.", self.name)
+            self.log.warning("You forgot to finish the '%s' ProgressBar! " "Setting the finished time now.", self.name)
             self.set_finish()
         return float(round(self.tfinish - self.tstart, ndigits=ndigits))
-    
+
     def log_duration(self, ndigits: int = 1) -> None:
-        records = {'status': 'finished',
-                   'lifetime': f'{self.get_duration(ndigits)}s'}
+        records = {"status": "finished", "lifetime": f"{self.get_duration(ndigits)}s"}
         self.log.info("%s %s", self.prefix, records)
-    
+
     def log_progress(self, step) -> None:
-        
+
         # Evaluate progress percentage
         percent = round(100 * (step + 1) / self.stop)
-        
+
         # Round percentage to multiple of self.step
         rpercent = int(self.step * round(float(percent) / self.step))
         if self.percentage >= rpercent or rpercent % self.step:
             # Ignore logging if the new progress percentage is not
             # greater or equal to the next multiple of self.step
             return
-        
+
         stepsleft = (100 - percent) / self.step
-        
+
         if step <= 1:
             # Ignore the first longer setup cycle
             eta = round(stepsleft * (time() - self.t_lastcycle))
         else:
             self._timespercycle.append(time() - self.t_lastcycle)
             eta = round(stepsleft * stats.mean(self._timespercycle))
-        
-        records = {'step': f'{step + 1}/{self.stop}',
-                   'percentage': percent,
-                   'ETA': f'{eta}s'}
-        
+
+        records = {"step": f"{step + 1}/{self.stop}", "percentage": percent, "ETA": f"{eta}s"}
+
         self.log.info("%s %s", self.prefix, records)
-        
+
         self.percentage = rpercent
         self.t_lastcycle = time()
 
@@ -160,49 +181,46 @@ class ProgressBar(object):
 # ---  Not used
 # ======================================================================
 
+
 def nd_spherical_coords(i, ndim):
     if i == ndim - 1:
-        return f"x_{i} = r * cos(φ_{ndim - 2}) " \
-               + "".join(f"* sin(φ_{i})" for i in range(ndim - 2))
-    
+        return f"x_{i} = r * cos(φ_{ndim - 2}) " + "".join(f"* sin(φ_{i})" for i in range(ndim - 2))
+
     elif i == ndim - 2:
-        return f"x_{i} = r * sin(φ_{ndim - 2}) " \
-               + "".join(f"* sin(φ_{i})" for i in range(ndim - 2))
+        return f"x_{i} = r * sin(φ_{ndim - 2}) " + "".join(f"* sin(φ_{i})" for i in range(ndim - 2))
     elif i == 0:
         return f"x_{i} = r * cos(φ_0)"
     else:
-        return f"x_{i} = r * cos(φ_{i}) " \
-               + "".join(f"* sin(φ_{i})" for i in range(i))
+        return f"x_{i} = r * cos(φ_{i}) " + "".join(f"* sin(φ_{i})" for i in range(i))
 
 
 def timethis(method: Callable) -> Any:
     from time import time
-    
+
     def timed_method(*args, **kw):
         t_start = time()
         result = method(*args, **kw)
-        print('%r (%r, %r) {} sec'
-              .format(method.__name__, args, kw, round(time() - t_start, 2)))
+        print(f"{method.__name__}({args}, {kw}) {round(time() - t_start, 2)} sec")
         return result
-    
+
     return timed_method
 
 
 def lastsim_path(simsdir) -> str:
     """ Returns the path to the most recent simulation directory. """
     import os
+
     all_sim_dirs = [d for d in os.listdir(simsdir) if d.isdigit()]
     if len(all_sim_dirs):
         most_recent_id = max(int(directory) for directory in all_sim_dirs)
-        return f'{simsdir}/{str(most_recent_id)}'
+        return f"{simsdir}/{str(most_recent_id)}"
     else:
         msg = f"{simsdir} does not contain any simulation directories!"
         raise SystemError(msg)
 
 
-def print_title_box(title: str,
-                    upcase: bool = True) -> str:
-    hash_bar = (len(title) + 6) * '#'
+def print_title_box(title: str, upcase: bool = True) -> str:
+    hash_bar = (len(title) + 6) * "#"
     if upcase:
         title = title.upper()
     title_box = f"{hash_bar}\n#  {title}  #\n{hash_bar}"
@@ -210,7 +228,7 @@ def print_title_box(title: str,
     return title_box
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # print_title_box("minlevel settings", upcase=False)
     N = 5
     for i in range(N):

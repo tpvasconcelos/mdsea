@@ -1,7 +1,7 @@
-from mdsea.vis.vpr import VaporyAnimation
 import mdsea as md
+from mdsea.vis.vapory import VaporyAnimation
 
-sm = md.SysManager.load(simid="_mdsea_testsimulation")
+sm = md.SysManager.load(simid="_mdsea_docs_example")
 
 anim = VaporyAnimation(sm)
 anim.render_frame(0, 0)

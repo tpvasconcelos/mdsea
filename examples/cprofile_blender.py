@@ -4,6 +4,7 @@ import pstats
 
 def main():
     from examples import vis_blender
+
     vis_blender.main()
 
 

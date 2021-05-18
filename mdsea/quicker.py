@@ -1,6 +1,3 @@
-#!/usr/local/bin/python
-# coding: utf-8
-
 """
 This is a list of optimized functions with the goal of speeding up the
 simulation. Some of these functions are based on existing ones from
@@ -11,9 +8,8 @@ such packages.
 """
 
 import numpy as np
-from scipy.spatial.distance import _distance_wrap
-
 from mdsea.constants import DTYPE
+from scipy.spatial.distance import _distance_wrap
 
 
 def cdist_(x: np.ndarray) -> np.ndarray:
@@ -41,7 +37,7 @@ def cdist_(x: np.ndarray) -> np.ndarray:
 def flipid(n):
     """ Flipped identity matrix. """
     id_ = np.zeros((n, n), dtype=DTYPE)
-    id_.flat[::n + 1] = 1
+    id_.flat[:: n + 1] = 1
     return id_[(slice(None, None, None), slice(None, None, -1))]
 
 

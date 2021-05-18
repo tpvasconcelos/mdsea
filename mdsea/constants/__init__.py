@@ -1,6 +1,3 @@
-#!/usr/local/bin/python
-# coding: utf-8
-
 """
 Useful constants for mdsea
 
@@ -17,4 +14,4 @@ DTYPE = numpy.float64
 # ======================================================================
 
 # animation platforms  ---
-SPRTD_ANIMPLATFORMS = ('mpl', 'blender', 'vapory', 'vpy', 'mayavi')
+SPRTD_ANIMPLATFORMS = ("mpl", "blender", "vapory", "vpy", "mayavi")
