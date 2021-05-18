@@ -57,10 +57,14 @@ class MPL(Vis):
     
     def __init__(self,
                  sm: SysManager,
-                 frame_step: int = 1
+                 frame_step: int = 1,
+                 backend: str = None
                  ) -> None:
         super(MPL, self).__init__(sm, frame_step)
-        
+
+        if backend is not None:
+            matplotlib.use(backend)
+
         if self.sm.NDIM == 1:
             zeroes_ = (self.sm.LEN_BOX / 2) + np.zeros((self.sm.STEPS,
                                                         self.sm.NUM_PARTICLES))
@@ -149,6 +153,7 @@ class Animation(MPL):
                  # MPL kwargs:
                  sm: SysManager,
                  frame_step: int = 1,
+                 backend: str = None,
                  # Animation kwargs:
                  scatter: bool = False,
                  color: str = 'orange',
@@ -174,7 +179,7 @@ class Animation(MPL):
         # ---  super
         # ==============================================================
         
-        super(Animation, self).__init__(sm, frame_step)
+        super(Animation, self).__init__(sm, frame_step, backend)
         
         # ==============================================================
         # ---  Parse kwargs

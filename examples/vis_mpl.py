@@ -7,7 +7,7 @@ FRAME_STEP = 5
 
 sm = md.SysManager.load(simid="_mdsea_testsimulation")
 
-anim = Animation(sm, frame_step=FRAME_STEP)
+anim = Animation(sm, frame_step=FRAME_STEP, backend="Qt5Agg")
 
 # anim.plt_slider(scatter=True, colorspeed=True)
 anim.anim(scatter=False, colorspeed=True)

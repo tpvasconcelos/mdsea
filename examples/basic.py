@@ -16,5 +16,5 @@ sim.run_simulation()
 # Run 2D animation with matplotlib  ---
 from mdsea.vis.mpl import Animation
 
-anim = Animation(sm, frame_step=6)
+anim = Animation(sm, frame_step=6, backend="Qt5Agg")
 anim.anim(colorspeed=True)

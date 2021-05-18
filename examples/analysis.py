@@ -5,7 +5,7 @@ import mdsea as md
 
 sm = md.SysManager.load(simid="_mdsea_testsimulation")
 
-mpl = MPL(sm)
+mpl = MPL(sm, backend="Qt5Agg")
 mpl.plt_energies()
 mpl.plt_temp()
 # mpl.plt_rdf()
