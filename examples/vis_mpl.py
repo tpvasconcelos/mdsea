@@ -1,17 +1,14 @@
 #!/usr/local/bin/python3
 # coding: utf-8
-from mdsea.vis.mpl import Animation
+from mdsea.vis.mpl import MLPAnimationCircles
 import mdsea as md
-
-FRAME_STEP = 5
 
 sm = md.SysManager.load(simid="_mdsea_testsimulation")
 
-anim = Animation(sm, frame_step=FRAME_STEP, backend="Qt5Agg")
+anim = MLPAnimationCircles(sm, frame_step=5, colorspeed=True)
 
-# anim.plt_slider(scatter=True, colorspeed=True)
-anim.anim(scatter=False, colorspeed=True)
+# anim.plt_slider()
+# anim.anim()
 
-# anim.export_animation(dpi=36, timeit=True)
-# md.make_mp4("{}/mpl.mp4".format(sm.mp4_path), sm.png_path,
-#             fps=24, timeit=True)
+anim.export_animation(dpi=36, timeit=True)
+md.make_mp4(f"{sm.mp4_path}/mpl.mp4", sm.png_path, fps=24, timeit=True)

@@ -7,15 +7,17 @@ matplotlib visualizations and animations.
 """
 
 import logging
-from typing import List, Optional, Tuple, Union
+from typing import Tuple
+from abc import abstractmethod, ABCMeta
 
 import matplotlib
 from matplotlib.collections import PathCollection
 import matplotlib.cm as cm
-import matplotlib.patches as patches
+from matplotlib.patches import Rectangle, Circle
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import Colormap
+from matplotlib.artist import Artist
 
 from mdsea import loghandler
 from mdsea.analytics import Vis
@@ -52,7 +54,7 @@ class MPL(Vis):
     def __init__(self,
                  sm: SysManager,
                  frame_step: int = 1,
-                 backend: str = None
+                 backend: str = "Qt5Agg",
                  ) -> None:
         super(MPL, self).__init__(sm, frame_step)
 
@@ -112,7 +114,7 @@ class MPL(Vis):
         fig = plt.figure()
         ax = fig.add_subplot(111)
         # generate histogram of velocities
-        ax.hist(self.speeds, bins=100, normed=True, label=label)
+        ax.hist(self.speeds.flatten(), bins=100, density=True, label=label)
         # compare this histogram to f(speeds_range_monte_carlo)
         # this is MB_speed that we wrote earlier
         ax.set_xlabel(r'Speed $(m/s)$', size=fontsize)
@@ -135,146 +137,70 @@ class MPL(Vis):
     def _safe_show(name: str) -> None:
         log.info(f'Plotting {name}...')
         try:
-            plt.show()
+            return plt.show()
         finally:
             plt.close('all')
 
 
-class Animation(MPL):
-    """ matplotlib animation. """
-    
+class _BaseMLPAnimation(MPL, metaclass=ABCMeta):
+    """Base matplotlib animation."""
+
     def __init__(self,
                  # MPL kwargs:
                  sm: SysManager,
                  frame_step: int = 1,
-                 backend: str = None,
+                 backend: str = "Qt5Agg",
                  # Animation kwargs:
-                 scatter: bool = False,
+                 colorspeed=False,
                  color: str = 'orange',
-                 figsize: Tuple[int, int] = (15, 10)
+                 figsize: Tuple[int, int] = (15, 10),
                  ) -> None:
-        """
-        
-        :param scatter
-            If True   - matplotlib.axes.Axes.scatter
-                      - [+] Fast draw time (ideal for simulations with large
-                            number of particles and/or number of steps)
-                      - [-] particle radius NOT accuratly represented
-                      - [-] NOT zoom-friendly
-            If False  - matplotlib.patches.Circle
-                      - [-] Slow draw time (NON-ideal for simulations with
-                            large number of particles and/or number of steps)
-                      - [+] Particle radius accuratly represented
-                      - [+] Zoom-friendly
-        
-        """
-        
-        # ==============================================================
-        # ---  super
-        # ==============================================================
-        
-        super(Animation, self).__init__(sm, frame_step, backend)
-        
-        # ==============================================================
-        # ---  Parse kwargs
-        # ==============================================================
-        
-        self.fig, self.ax = plt.subplots(figsize=figsize)
-        
+
+        super(_BaseMLPAnimation, self).__init__(sm, frame_step, backend)
+
         self.dflt_clr = color
-        self.draw_wells = False
-        self.scatter = scatter
-        
-        # ==============================================================
-        # ---  Axes.scatter settings
-        # ==============================================================
-        
-        self.ax_scatter: PathCollection = None
-        # This makes sure that the markersize is somewhat
-        # representative of the actual particle diameter
-        if self.sm.NDIM == 1:
-            scatter_ms = (self.sm.VOL_FRACTION / 0.74) \
-                         * (800 / (2 * self.sm.NUM_PARTICLES)) \
-                         * (2 * self.sm.RADIUS_PARTICLE)
-        else:
-            scatter_ms = ((self.sm.VOL_FRACTION / 0.7) ** 0.5) \
-                         * (1000 / (2 * self.sm.NUM_PARTICLES ** 0.5)) \
-                         * (2 * self.sm.RADIUS_PARTICLE)
-        
-        self.scatter_size = scatter_ms ** 2
-        
-        # ==============================================================
-        # ---  Others
-        # ==============================================================
-        
-        self.colorspeed = False
-        
-        self.pbarr = ProgressBar("Saving animation frame",
-                                 self.sm.STEPS, __name__)
-    
-    @property
-    def _circles(self) -> Tuple[patches.Circle, ...]:
-        return tuple(filter(lambda c: isinstance(c, patches.Circle), self.fig.axes[0].get_children()))
+        self.colorspeed = colorspeed
 
-    # ==================================================================
-    # ---  Private methods
-    # ==================================================================
+        if self.colorspeed:
+            self.colors = [[speed2color(speed=s, speed_limit=self.maxspeed) for s in ss] for ss in self.speeds]
 
-    # Initialisation methods  ---
+        self.fig, self.ax = plt.subplots(figsize=figsize)
 
-    def _init_boundary_box(self) -> None:
-        """ Plot the box where the particles are contained in. """
-        if self.sm.NDIM == 1:
-            height = 2 * self.sm.RADIUS_PARTICLE
-            origin = (0, self.sm.LEN_BOX / 2 - height / 2)
-        else:
-            height = self.sm.LEN_BOX
-            origin = (0, 0)
-        self.ax.add_patch(patches.Rectangle(xy=origin, width=self.sm.LEN_BOX, height=height, lw=1, fill=False))
-
-    def _init_preferences(self) -> None:
+        # axis preferences
         min_ = -0.1
         max_ = self.sm.LEN_BOX + 0.1
         self.ax.axis(xmin=min_, xmax=max_, ymin=min_, ymax=max_)
         self.ax.set_aspect('equal')
         self.ax.set_axis_off()
 
-    def _init_colors(self):
-        self.colors = [[speed2color(speed=s, speed_limit=self.maxspeed) for s in ss]
-                       for ss in self.speeds]
+        # Draw the box where the particles are contained in
+        if self.sm.NDIM == 1:
+            height = 2 * self.sm.RADIUS_PARTICLE
+            origin = (0, self.sm.LEN_BOX / 2 - height / 2)
+        else:
+            height = self.sm.LEN_BOX
+            origin = (0, 0)
+        self.ax.add_patch(Rectangle(xy=origin, width=self.sm.LEN_BOX, height=height, lw=1, fill=False))
 
-    def _plt_init(self) -> None:
-        # set up initial conditions
-        self._init_boundary_box()
-        self._init_preferences()
-        if self.colorspeed:
-            self._init_colors()
-        if self.scatter:
-            self.ax_scatter = self.ax.scatter(
-                x=self.r_coords[0][0],
-                y=self.r_coords[0][1],
-                color=self.colors[0] if self.colorspeed else None,
-                s=self.scatter_size,
-                alpha=0.9,
-                lw=0,
-            )
+        self.pbarr = ProgressBar("Saving animation frame", self.sm.STEPS, __name__)
 
-    def _plt_particles_scatter(self, step: int) -> None:
-        self.ax_scatter.set_offsets(self.r_vecs[step])
-        self.ax_scatter.set_facecolor(self.colors[step] if self.colorspeed else self.dflt_clr)
-    
-    def _plt_particles_circles(self, step: int) -> None:
-        for i in range(self.sm.NUM_PARTICLES):
-            self.ax.add_patch(
-                patches.Circle(
-                    xy=(self.r_coords[step][0][i], self.r_coords[step][1][i]),
-                    fc=self.colors[step][i] if self.colorspeed else self.dflt_clr,
-                    radius=self.sm.RADIUS_PARTICLE,
-                    alpha=0.9,
-                    lw=0,
-                )
-            )
-    
+    @property
+    @abstractmethod
+    def artists(self) -> Tuple[Artist, ...]:
+        pass
+
+    @abstractmethod
+    def _add_particles(self, step: int = 0) -> None:
+        pass
+
+    @abstractmethod
+    def _update_particles(self, step: int) -> None:
+        pass
+
+    # ==================================================================
+    # ---  Private methods
+    # ==================================================================
+
     def _plt_well(self, step: int) -> None:
         """ FIXME(tpvasconcelos) not currently working for step potentials"""
         # x, y = self.x[step], self.y[step]
@@ -282,58 +208,25 @@ class Animation(MPL):
         #     circle_settings = dict(
         #         xy=(x, y), facecolor='none', lw=1,
         #         radius=R_SQUAREWELL * self.sm.RADIUS_PARTICLE)
-        #     self.ax.add_patch(patches.Circle(**circle_settings))
+        #     self.ax.add_patch(Circle(**circle_settings))
         pass
 
-    def _plt_particles(self, step: int) -> None:
-        """ Plot particles. """
-        if self.scatter:
-            self._plt_particles_scatter(step)
-        else:
-            self._plt_particles_circles(step)
-
-    def _rm_particles(self) -> None:
-        if self.scatter and self.ax_scatter is not None:
-            self.ax_scatter.remove()
-        else:
-            for circle in self._circles:
-                circle.remove()
-
     def _update_slider(self, step: np.float64) -> None:
-        self._rm_particles()
         # Turn step from 'np.float64' to 'int'
         step = round(float(step))
-        self._plt_particles(step)
-        if self.draw_wells:
-            self._plt_well(step)
+        self._update_particles(step)
         # update canvas
         self.fig.canvas.draw_idle()
-    
-    def _update_animloop(self, step):
-        self._plt_particles(step)
-        return self.ax_scatter,
     
     # ==================================================================
     # ---  Public methods || User methods
     # ==================================================================
     
-    def plt_slider(self,
-                   scatter: Optional[bool] = None,
-                   draw_wells: bool = False,
-                   colorspeed: bool = False
-                   ) -> None:
+    def plt_slider(self) -> None:
         """ Plot 2D slider. """
         from matplotlib.widgets import Slider
-        
-        if isinstance(scatter, bool):
-            self.scatter = scatter
-        self.draw_wells = draw_wells
-        self.colorspeed = colorspeed
-        
-        self._plt_init()
-        self._plt_particles(step=0)
-        if self.draw_wells and not self.scatter:
-            self._plt_well(step=0)
+
+        self._add_particles()
         
         # set up slider
         ax_step_slider = plt.axes([0.1, 0.05, 0.8, 0.03])
@@ -344,33 +237,33 @@ class Animation(MPL):
         
         self._safe_show(self.plt_slider.__name__)
     
-    def anim(self,
-             scatter: Optional[bool] = None,
-             draw_wells: bool = False,
-             colorspeed: bool = False,
-             loop: bool = True
-             ) -> None:
+    def anim(self, loop: bool = True) -> None:
         """ Plot 2D animation loop. """
         import matplotlib.animation as animation
-        
-        if isinstance(scatter, bool):
-            self.scatter = scatter
-        self.draw_wells = draw_wells
-        self.colorspeed = colorspeed
-        
-        self._plt_init()
-        
+
+        def anim_init() -> Tuple[Artist, ...]:
+            self._add_particles()
+            return self.artists
+
+        def anim_update(step) -> Tuple[Artist, ...]:
+            self._update_particles(step)
+            return self.artists
+
         # Delay between frames in milliseconds (24fps)
         spf = int(1000 * (1 / 24))
         
         # noinspection PyTypeChecker,PyUnusedLocal
-        animation.FuncAnimation(
-            fig=self.fig, func=self._update_animloop,
+        anim = animation.FuncAnimation(
+            fig=self.fig,
+            func=anim_update,
             frames=np.arange(0, self.sm.STEPS - 1, self.frame_step),
-            interval=spf, blit=True, init_func=self._scatter_init,
-            repeat=loop, repeat_delay=2 * spf
+            init_func=anim_init,
+            interval=spf,
+            blit=True,
+            repeat=loop,
+            repeat_delay=2 * spf
             )
-        
+
         self._safe_show(self.anim.__name__)
     
     def export_animation(self,
@@ -382,13 +275,12 @@ class Animation(MPL):
         if timeit:
             self.pbarr.set_start()
 
-        self._plt_init()
-        
+        self._add_particles()
+
         for step in range(0, self.sm.STEPS, self.frame_step):
             
             # Remove and redraw/re-plot particles
-            self._rm_particles()
-            self._plt_particles(step)
+            self._update_particles(step)
             
             # Save figure
             fname = "{}/img{:06}.png".format(self.sm.png_path, step)
@@ -402,3 +294,81 @@ class Animation(MPL):
         if timeit:
             self.pbarr.set_finish()
             self.pbarr.log_duration()
+
+
+class MLPAnimationScatter(_BaseMLPAnimation):
+    """
+    Best for for simulations with large number of particles and/or number of
+    steps. It uses ``matplotlib.axes.Axes.scatter`` to plot the particles,
+    which results in
+      * not being zoom-friendly
+      * particle radius **not** being accurately represented
+      * faster draw times
+    """
+    def __init__(self, *args, **kwargs):
+        super(MLPAnimationScatter, self).__init__(*args, **kwargs)
+
+        # defined in ``_add_particles()``
+        self.ax_scatter: PathCollection = None
+
+    @property
+    def artists(self) -> Tuple[PathCollection]:
+        return (self.ax_scatter, )
+
+    def _add_particles(self, step: int = 0) -> None:
+        # This makes sure that the ``markersize`` is somewhat
+        # representative of the actual particle diameter
+        # TODO: document the logic used here!
+        if self.sm.NDIM == 1:
+            scatter_ms = (self.sm.VOL_FRACTION / 0.74) \
+                         * (800 / (2 * self.sm.NUM_PARTICLES)) \
+                         * (2 * self.sm.RADIUS_PARTICLE)
+        else:
+            scatter_ms = ((self.sm.VOL_FRACTION / 0.7) ** 0.5) \
+                         * (1000 / (2 * self.sm.NUM_PARTICLES ** 0.5)) \
+                         * (2 * self.sm.RADIUS_PARTICLE)
+
+        self.ax_scatter: PathCollection = self.ax.scatter(
+            x=self.r_coords[0][0],
+            y=self.r_coords[0][1],
+            color=self.colors[0] if self.colorspeed else self.dflt_clr,
+            s=scatter_ms ** 2,
+            alpha=0.9,
+            lw=0,
+        )
+
+    def _update_particles(self, step: int) -> None:
+        self.ax_scatter.set_offsets(self.r_vecs[step])
+        self.ax_scatter.set_facecolor(self.colors[step] if self.colorspeed else self.dflt_clr)
+
+
+class MLPAnimationCircles(_BaseMLPAnimation):
+    """
+    Not ideal for for simulations with large number of particles and/or number
+    of  steps. It uses ``matplotlib.patches.Circle`` to plot the particles,
+    which results in
+      * being zoom-friendly
+      * particle radius being accurately represented
+      * faster draw times
+    """
+
+    @property
+    def artists(self) -> Tuple[Circle, ...]:
+        return tuple(filter(lambda c: isinstance(c, Circle), self.ax.get_children()))
+
+    def _add_particles(self, step: int = 0) -> None:
+        for i in range(self.sm.NUM_PARTICLES):
+            self.ax.add_patch(
+                Circle(
+                    xy=(self.r_coords[step][0][i], self.r_coords[step][1][i]),
+                    fc=self.colors[step][i] if self.colorspeed else self.dflt_clr,
+                    radius=self.sm.RADIUS_PARTICLE,
+                    alpha=0.9,
+                    lw=0,
+                )
+            )
+
+    def _update_particles(self, step: int) -> None:
+        for a in self.artists:
+            a.remove()
+        self._add_particles(step=step)
