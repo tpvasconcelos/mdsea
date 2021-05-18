@@ -257,9 +257,8 @@ class Animation(MPL):
         """ Plot particles. """
         if self.scatter:
             self._plt_particles_scatter(step)
-            return
-        # DEFAULT (if not scatter)
-        self._plt_particles_circles(step)
+        else:
+            self._plt_particles_circles(step)
     
     def _plt_well(self, step: int) -> None:
         """ FIXME(tpvasconcelos) not currently working for step potentials"""
