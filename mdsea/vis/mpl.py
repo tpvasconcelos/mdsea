@@ -219,17 +219,13 @@ class Animation(MPL):
     
     def _plt_box(self) -> None:
         """ Plot the box where the particles are contained in. """
-        w = self.sm.LEN_BOX
         if self.sm.NDIM == 1:
-            h = 2 * self.sm.RADIUS_PARTICLE
-            origin = (0, self.sm.LEN_BOX / 2 - h / 2)
+            height = 2 * self.sm.RADIUS_PARTICLE
+            origin = (0, self.sm.LEN_BOX / 2 - height / 2)
         else:
-            h = self.sm.LEN_BOX
+            height = self.sm.LEN_BOX
             origin = (0, 0)
-        
-        lw = 1
-        inner_box = dict(xy=origin, width=w, height=h, lw=lw, fill=False)
-        self.ax.add_patch(patches.Rectangle(**inner_box))
+        self.ax.add_patch(patches.Rectangle(xy=origin, width=self.sm.LEN_BOX, height=height, lw=1, fill=False))
     
     def _scatter_init(self):
         kwargs = dict(s=self.scatter_size, lw=0, alpha=0.9)
