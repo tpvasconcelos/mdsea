@@ -10,12 +10,6 @@ import logging
 from typing import List, Optional, Tuple, Union
 
 import matplotlib
-
-try:
-    matplotlib.use('Qt5Agg')
-except ValueError:
-    matplotlib.interactive(True)
-
 from matplotlib.collections import PathCollection
 import matplotlib.cm as cm
 import matplotlib.patches as patches
@@ -218,11 +212,17 @@ class Animation(MPL):
         self.pbarr = ProgressBar("Saving animation frame",
                                  self.sm.STEPS, __name__)
     
+    @property
+    def _circles(self) -> Tuple[patches.Circle, ...]:
+        return tuple(filter(lambda c: isinstance(c, patches.Circle), self.fig.axes[0].get_children()))
+
     # ==================================================================
     # ---  Private methods
     # ==================================================================
-    
-    def _plt_box(self) -> None:
+
+    # Initialisation methods  ---
+
+    def _init_boundary_box(self) -> None:
         """ Plot the box where the particles are contained in. """
         if self.sm.NDIM == 1:
             height = 2 * self.sm.RADIUS_PARTICLE
@@ -231,16 +231,33 @@ class Animation(MPL):
             height = self.sm.LEN_BOX
             origin = (0, 0)
         self.ax.add_patch(patches.Rectangle(xy=origin, width=self.sm.LEN_BOX, height=height, lw=1, fill=False))
-    
-    def _scatter_init(self):
-        self.ax_scatter = self.ax.scatter(
-            x=self.r_coords[0][0],
-            y=self.r_coords[0][1],
-            color=self.colors[0] if self.colorspeed else None,
-            s=self.scatter_size,
-            alpha=0.9,
-            lw=0,
-        )
+
+    def _init_preferences(self) -> None:
+        min_ = -0.1
+        max_ = self.sm.LEN_BOX + 0.1
+        self.ax.axis(xmin=min_, xmax=max_, ymin=min_, ymax=max_)
+        self.ax.set_aspect('equal')
+        self.ax.set_axis_off()
+
+    def _init_colors(self):
+        self.colors = [[speed2color(speed=s, speed_limit=self.maxspeed) for s in ss]
+                       for ss in self.speeds]
+
+    def _plt_init(self) -> None:
+        # set up initial conditions
+        self._init_boundary_box()
+        self._init_preferences()
+        if self.colorspeed:
+            self._init_colors()
+        if self.scatter:
+            self.ax_scatter = self.ax.scatter(
+                x=self.r_coords[0][0],
+                y=self.r_coords[0][1],
+                color=self.colors[0] if self.colorspeed else None,
+                s=self.scatter_size,
+                alpha=0.9,
+                lw=0,
+            )
 
     def _plt_particles_scatter(self, step: int) -> None:
         self.ax_scatter.set_offsets(self.r_vecs[step])
@@ -258,13 +275,6 @@ class Animation(MPL):
                 )
             )
     
-    def _plt_particles(self, step: int) -> None:
-        """ Plot particles. """
-        if self.scatter:
-            self._plt_particles_scatter(step)
-        else:
-            self._plt_particles_circles(step)
-    
     def _plt_well(self, step: int) -> None:
         """ FIXME(tpvasconcelos) not currently working for step potentials"""
         # x, y = self.x[step], self.y[step]
@@ -275,20 +285,20 @@ class Animation(MPL):
         #     self.ax.add_patch(patches.Circle(**circle_settings))
         pass
 
+    def _plt_particles(self, step: int) -> None:
+        """ Plot particles. """
+        if self.scatter:
+            self._plt_particles_scatter(step)
+        else:
+            self._plt_particles_circles(step)
+
     def _rm_particles(self) -> None:
         if self.scatter and self.ax_scatter is not None:
             self.ax_scatter.remove()
         else:
             for circle in self._circles:
                 circle.remove()
-    
-    def _set_preferences(self) -> None:
-        min_ = -0.1
-        max_ = self.sm.LEN_BOX + 0.1
-        self.ax.axis(xmin=min_, xmax=max_, ymin=min_, ymax=max_)
-        self.ax.set_aspect('equal')
-        self.ax.set_axis_off()
-    
+
     def _update_slider(self, step: np.float64) -> None:
         self._rm_particles()
         # Turn step from 'np.float64' to 'int'
@@ -300,19 +310,8 @@ class Animation(MPL):
         self.fig.canvas.draw_idle()
     
     def _update_animloop(self, step):
-        self._plt_particles_scatter(step)
+        self._plt_particles(step)
         return self.ax_scatter,
-    
-    def _plt_init(self) -> None:
-        # set up initial conditions
-        self._plt_box()
-        self._set_preferences()
-        if self.colorspeed:
-            self._colors_init()
-    
-    def _colors_init(self):
-        self.colors = [[speed2color(speed=s, speed_limit=self.maxspeed) for s in ss]
-                       for ss in self.speeds]
     
     # ==================================================================
     # ---  Public methods || User methods
@@ -382,10 +381,8 @@ class Animation(MPL):
         
         if timeit:
             self.pbarr.set_start()
-        
-        # Set up initial conditions
-        self._plt_box()
-        self._set_preferences()
+
+        self._plt_init()
         
         for step in range(0, self.sm.STEPS, self.frame_step):
             
