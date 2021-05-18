@@ -1,5 +1,3 @@
-#!/usr/local/bin/python
-# coding: utf-8
 from mdsea.vis.mpl import MPL
 import mdsea as md
 

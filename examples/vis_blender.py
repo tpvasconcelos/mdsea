@@ -1,5 +1,3 @@
-#!/usr/local/bin/python3
-# coding: utf-8
 from mdsea.vis.blender import BlenderAnimation
 import mdsea as md
 

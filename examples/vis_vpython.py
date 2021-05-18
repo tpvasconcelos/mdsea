@@ -1,5 +1,3 @@
-#!/usr/local/bin/python
-# coding: utf-8
 from mdsea.vis.vpy import VpythonAnimation
 import mdsea as md
 

@@ -1,7 +1,4 @@
-#!/usr/local/bin/python3
-# coding: utf-8
 import mdsea as md
-from mdsea.vis.mpl import MLPAnimationCircles
 
 # Instantiate system manager  ---
 sm = md.SysManager.new(simid="_mdsea_testsimulation",
@@ -16,5 +13,7 @@ sim = md.ContinuousPotentialSolver(sm)
 sim.run_simulation()
 
 # Run 2D animation with matplotlib  ---
+from mdsea.vis.mpl import MLPAnimationCircles
+
 anim = MLPAnimationCircles(sm, frame_step=6, colorspeed=True)
 anim.anim()

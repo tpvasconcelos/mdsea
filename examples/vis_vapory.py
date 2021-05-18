@@ -1,5 +1,3 @@
-#!/usr/local/bin/python
-# coding: utf-8
 from mdsea.vis.vpr import VaporyAnimation
 import mdsea as md
 

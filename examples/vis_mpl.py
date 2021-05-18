@@ -1,5 +1,3 @@
-#!/usr/local/bin/python3
-# coding: utf-8
 from mdsea.vis.mpl import MLPAnimationCircles
 import mdsea as md
 

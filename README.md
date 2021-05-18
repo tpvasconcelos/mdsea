@@ -111,10 +111,10 @@ sim = md.ContinuousPotentialSolver(sm)
 sim.run_simulation()
 
 # Run 2D animation with matplotlib  ---
-from mdsea.vis.mpl import Animation
+from mdsea.vis.mpl import MLPAnimationCircles
 
-anim = Animation(sm, frame_step=6)
-anim.anim(colorspeed=True)
+anim = MLPAnimationCircles(sm, frame_step=6, colorspeed=True)
+anim.anim()
 ```
 
 The output should look something like this (you can ignore the warning):

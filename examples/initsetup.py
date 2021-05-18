@@ -1,5 +1,3 @@
-#!/usr/local/bin/python3
-# coding: utf-8
 import mdsea as md
 
 # Calculate the 'number of steps'  ---
