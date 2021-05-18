@@ -1,23 +1,28 @@
-[tool.poetry]
-name = "mdsea"
-version = "0.1.0"
-description = ""
-authors = ["Tomas Pereira de Vasconcelos <tomasvasconcelos1@gmail.com>"]
-
-[tool.poetry.dependencies]
-python = "^3.7"
-numpy = "^1.19.4"
-scipy = "^1.5.4"
-h5py = "^3.0.0"
-matplotlib = "^3.3.2"
-Vapory = "^0.1.1"
-Pillow = "^8.0.1"
-vpython = "^7.6.1"
-mayavi = "^4.7.2"
-PyQt5 = "^5.15.2"
-
-[tool.poetry.dev-dependencies]
-
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools >= 40.9.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 120
+target-version = ['py37']
+include = '\.pyi?$'
+exclude = '''
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | build
+    | dist
+    | \.git-crypt
+    | \.pytest_cache
+    | \.idea
+    | \.circleci
+  )/
+  | foo.py           # also separately exclude a file named foo.py in
+                     # the root of the project
+)
+'''
