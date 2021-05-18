@@ -233,30 +233,30 @@ class Animation(MPL):
         self.ax.add_patch(patches.Rectangle(xy=origin, width=self.sm.LEN_BOX, height=height, lw=1, fill=False))
     
     def _scatter_init(self):
-        kwargs = dict(s=self.scatter_size, lw=0, alpha=0.9)
-        if self.colorspeed:
-            kwargs['color'] = self.colors[0]
-        self.ax_scatter = self.ax.scatter(self.r_coords[0][0],
-                                          self.r_coords[0][1], **kwargs)
-        return self.ax_scatter,
-    
+        self.ax_scatter = self.ax.scatter(
+            x=self.r_coords[0][0],
+            y=self.r_coords[0][1],
+            color=self.colors[0] if self.colorspeed else None,
+            s=self.scatter_size,
+            alpha=0.9,
+            lw=0,
+        )
+
     def _plt_particles_scatter(self, step: int) -> None:
-        clr: Union[str, List] = self.dflt_clr
-        if self.colorspeed:
-            clr = self.colors[step]
         self.ax_scatter.set_offsets(self.r_vecs[step])
-        self.ax_scatter.set_facecolor(clr)
+        self.ax_scatter.set_facecolor(self.colors[step] if self.colorspeed else self.dflt_clr)
     
     def _plt_particles_circles(self, step: int) -> None:
-        clr: Union[str, Tuple] = self.dflt_clr
         for i in range(self.sm.NUM_PARTICLES):
-            if self.colorspeed:
-                clr = self.colors[step][i]
-            circle_settings = dict(xy=(self.r_coords[step][0][i],
-                                       self.r_coords[step][1][i]),
-                                   radius=self.sm.RADIUS_PARTICLE, lw=0,
-                                   fc=clr, alpha=0.9)
-            self.ax.add_patch(patches.Circle(**circle_settings))
+            self.ax.add_patch(
+                patches.Circle(
+                    xy=(self.r_coords[step][0][i], self.r_coords[step][1][i]),
+                    fc=self.colors[step][i] if self.colorspeed else self.dflt_clr,
+                    radius=self.sm.RADIUS_PARTICLE,
+                    alpha=0.9,
+                    lw=0,
+                )
+            )
     
     def _plt_particles(self, step: int) -> None:
         """ Plot particles. """
@@ -274,24 +274,19 @@ class Animation(MPL):
         #         radius=R_SQUAREWELL * self.sm.RADIUS_PARTICLE)
         #     self.ax.add_patch(patches.Circle(**circle_settings))
         pass
-    
+
     def _rm_particles(self) -> None:
-        if self.scatter and self.ax_scatter:
+        if self.scatter and self.ax_scatter is not None:
             self.ax_scatter.remove()
-            return
-        
-        # DEFAULT (if not scatter)
-        circles = [c for c in self.fig.axes[0].get_children()
-                   if isinstance(c, patches.Circle)]
-        for circle in circles:
-            circle.remove()
+        else:
+            for circle in self._circles:
+                circle.remove()
     
     def _set_preferences(self) -> None:
         min_ = -0.1
         max_ = self.sm.LEN_BOX + 0.1
         self.ax.axis(xmin=min_, xmax=max_, ymin=min_, ymax=max_)
         self.ax.set_aspect('equal')
-        # remove axis0
         self.ax.set_axis_off()
     
     def _update_slider(self, step: np.float64) -> None:
