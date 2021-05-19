@@ -171,11 +171,9 @@ class _BaseSimulator:
             self._quench(self.sm.QUENCH_T.pop(0))
 
     def _quench(self, temperature: float) -> None:
-        t_i = self.update_temp()
-        f = 1.0
-        if t_i:
-            f = (temperature / t_i) ** 0.5
-        self.v_vec *= f
+        self.update_temp()
+        if self.temp != 0.0:
+            self.v_vec *= (temperature / self.temp) ** 0.5
 
     # ==================================================================
     # ---  Helper Functions
@@ -525,7 +523,7 @@ class ContinuousPotentialSolver(_BaseSimulator):
 
     def apply_collision_damping(self):
         """ Apply a dissipative force for every particle collision. """
-        pass
+        raise NotImplementedError
         # TODO: review this whole method!
         # new_collpairs = []
         # self.update_pairs(2 * self.sm.RADIUS_PARTICLE)
