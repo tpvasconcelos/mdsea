@@ -4,12 +4,13 @@ from itertools import chain, combinations
 from typing import Optional
 
 import numpy as np
-from mdsea import Potential, quicker
+from mdsea import quicker
 from mdsea.config import Config
 from mdsea.constants import DTYPE
 from mdsea.core import SysManager
 from mdsea.gen import PosGen, VelGen
 from mdsea.helpers import ProgressBar, get_dt
+from mdsea.potentials import Potential
 from numpy.core.umath_tests import inner1d
 
 log = logging.getLogger(__name__)

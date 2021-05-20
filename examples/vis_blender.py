@@ -1,4 +1,4 @@
-import mdsea as md
+from mdsea.core import SysManager
 from mdsea.helpers import setup_logging
 from mdsea.vis.blender import BlenderAnimation
 
@@ -8,7 +8,7 @@ FRAME_STEP = 5
 
 
 def main():
-    sm = md.SysManager.load(simid="_mdsea_docs_example")
+    sm = SysManager.load(simid="_mdsea_docs_example")
 
     anim = BlenderAnimation(sm, frame_step=FRAME_STEP)
 

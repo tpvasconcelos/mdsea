@@ -1,21 +1,23 @@
-import mdsea as md
+from mdsea.core import SysManager
 from mdsea.helpers import setup_logging
+from mdsea.potentials import Potential
+from mdsea.simulator import ContinuousPotentialSolver
 from mdsea.vis.matplotlib import MLPAnimationScatter
 
 setup_logging(level="DEBUG")
 
 # Instantiate system manager  ---
-sm = md.SysManager.new(
+sm = SysManager.new(
     simid="_mdsea_docs_example",
     ndim=2,
     num_particles=6 ** 2,
-    steps=400,
+    steps=500,
     vol_fraction=0.2,
     radius_particle=0.5,
 )
 
 # Instantiate simulation  ---
-sim = md.ContinuousPotentialSolver(sm, pot=md.Potential.lennardjones(1, 1))
+sim = ContinuousPotentialSolver(sm, pot=Potential.lennardjones(1, 1))
 
 # Run the simulation  ---
 sim.run_simulation()

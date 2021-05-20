@@ -1,5 +1,7 @@
-import mdsea as md
+from mdsea.core import SysManager
 from mdsea.helpers import setup_logging
+from mdsea.potentials import Potential
+from mdsea.simulator import ContinuousPotentialSolver
 
 setup_logging(level="DEBUG")
 
@@ -10,12 +12,12 @@ FRAMES_PER_SECOND = 24
 STEPS = int(SECONDS * FRAMES_PER_SECOND * FRAME_STEP)
 
 # Potential function ( /python-class )
-pot = md.Potential.boundedmie(a=0.2, epsilon=1, sigma=1, m=12, n=6)
+pot = Potential.boundedmie(a=0.2, epsilon=1, sigma=1, m=12, n=6)
 p_radius = pot.kwargs["sigma"] / 2
 
 # Instantiate system  ---
 NDIM = 3
-sm = md.SysManager.new(
+sm = SysManager.new(
     # ID (optional)
     simid="_mdsea_docs_example",
     # Mandatory fields
@@ -39,7 +41,7 @@ sm = md.SysManager.new(
 )
 
 # Instantiate simulation  ---
-sim = md.ContinuousPotentialSolver(
+sim = ContinuousPotentialSolver(
     sm=sm,
     pot=pot,
     # r_cutoff=2.5 * pot.potminimum()

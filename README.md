@@ -97,29 +97,39 @@ _interactive_ shells (like the one linked to Terminal).
 ## Example
 
 ```python
-import mdsea as md
+from mdsea.core import SysManager
+from mdsea.helpers import setup_logging
+from mdsea.potentials import Potential
+from mdsea.simulator import ContinuousPotentialSolver
+
+setup_logging(level="DEBUG")
 
 # Instantiate system manager  ---
-sm = md.SysManager.new(ndim=2, num_particles=6 ** 2, steps=500,
-    vol_fraction=0.2, radius_particle=0.5,
-    pot=md.Potential.lennardjones(1, 1))
+sm = SysManager.new(
+    simid="_mdsea_docs_example",
+    ndim=2,
+    num_particles=6 ** 2,
+    steps=500,
+    vol_fraction=0.2,
+    radius_particle=0.5,
+)
 
 # Instantiate simulation  ---
-sim = md.ContinuousPotentialSolver(sm)
+sim = ContinuousPotentialSolver(sm, pot=Potential.lennardjones(1, 1))
 
 # Run the simulation  ---
 sim.run_simulation()
 
 # Run 2D animation with matplotlib  ---
-from mdsea.vis.matplotlib import MLPAnimationCircles
+from mdsea.vis.matplotlib import MLPAnimationScatter
 
-anim = MLPAnimationCircles(sm, frame_step=6, colorspeed=True)
+anim = MLPAnimationScatter(sm, frame_step=6, colorspeed=True)
 anim.anim()
 ```
 
 The output should look something like this (you can ignore the warning):
 ```
-[INFO:mdsea.core] New simulation: {'id': '1543180726724682', 'path': 'simfiles/1543180726724682'}
+[INFO:mdsea.core] New simulation: {'id': '_mdsea_docs_example', 'path': 'simfiles/_mdsea_docs_example'}
 [WARNING:mdsea.core] A ValueError ('Not a location (invalid object ID)') was catched while trying to update a dataset. However, we noticed that the datafile in question wasn't open. We'll try to fix this and retry...
 [INFO:mdsea.simulator] ProgresBar (Simulator): {'step': '28/500', 'percentage': 6, 'ETA': '1s'}
 [INFO:mdsea.simulator] ProgresBar (Simulator): {'step': '73/500', 'percentage': 15, 'ETA': '1s'}

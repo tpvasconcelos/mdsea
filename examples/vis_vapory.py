@@ -1,10 +1,10 @@
-import mdsea as md
+from mdsea.core import SysManager
 from mdsea.helpers import setup_logging
 from mdsea.vis.vapory import VaporyAnimation
 
 setup_logging(level="DEBUG")
 
-sm = md.SysManager.load(simid="_mdsea_docs_example")
+sm = SysManager.load(simid="_mdsea_docs_example")
 
 anim = VaporyAnimation(sm)
 anim.render_frame(0, 0)

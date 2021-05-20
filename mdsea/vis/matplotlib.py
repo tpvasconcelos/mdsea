@@ -241,7 +241,7 @@ class _BaseMLPAnimation(MPL, metaclass=ABCMeta):
         spf = int(1000 * (1 / 24))
 
         # noinspection PyTypeChecker,PyUnusedLocal
-        animation.FuncAnimation(
+        anim = animation.FuncAnimation(  # noqa: F841
             fig=self.fig,
             func=anim_update,
             frames=np.arange(0, self.sm.STEPS - 1, self.frame_step),
