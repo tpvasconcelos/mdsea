@@ -7,9 +7,7 @@ from typing import Optional, Union
 import h5py
 import numpy as np
 from mdsea.constants import DTYPE, fileman as cfm
-from mdsea.helpers import nsphere_volume, setup_logging
-from mdsea.potentials import Potential
-from scipy.constants import codata
+from mdsea.helpers import nsphere_volume
 
 log = logging.getLogger(__name__)
 
@@ -38,17 +36,9 @@ class SysManager:
         mass: float = 1,
         pbc: bool = True,
         steps: int = 1,
-        gravity: bool = False,
-        isothermal: bool = False,
-        reduced_units: bool = True,
         quench_temps: list = [],
         quench_steps: list = [],
         quench_timings: list = [],
-        restitution_coeff: float = 1.0,
-        delta_t: Optional[float] = None,
-        log_level: Optional[int] = None,
-        r_cutoff: Optional[float] = None,
-        pot: Potential = Potential.ideal(),
     ) -> None:
         """
         TODO: docstring
@@ -69,42 +59,24 @@ class SysManager:
         # Settings dictionary (we'll save this to a file)
         self._settings: dict = {}
 
-        # Logging stuff  ---
-
-        if log_level is not None:
-            setup_logging(level=log_level)
-            self._settings.update(log_level=log_level)
-
         # Bunch 'o variables  ---
 
-        self.RESTITUTION_COEFF = restitution_coeff
         self.RADIUS_PARTICLE = radius_particle
         self.NUM_PARTICLES = num_particles
         self.VOL_FRACTION = vol_fraction
-        self.ISOTHERMAL = isothermal
-        self.R_CUTOFF = r_cutoff
-        self.DELTA_T = delta_t
-        self.GRAVITY = gravity
         self.STEPS = steps
         self.NDIM = ndim
         self.MASS = mass
         self.TEMP = temp
-        self.POT = pot
         self.PBC = pbc
 
-        self._settings.update(restitution_coeff=restitution_coeff)
         self._settings.update(radius_particle=radius_particle)
         self._settings.update(num_particles=num_particles)
         self._settings.update(vol_fraction=vol_fraction)
-        self._settings.update(isothermal=isothermal)
-        self._settings.update(r_cutoff=r_cutoff)
-        self._settings.update(delta_t=delta_t)
-        self._settings.update(gravity=gravity)
         self._settings.update(steps=steps)
         self._settings.update(ndim=ndim)
         self._settings.update(mass=mass)
         self._settings.update(temp=temp)
-        self._settings.update(pot=pot)
         self._settings.update(pbc=pbc)
 
         # Quenching stuff  ---
@@ -116,16 +88,6 @@ class SysManager:
         self._settings.update(quench_temps=quench_temps)
         self._settings.update(quench_steps=quench_steps)
         self._settings.update(quench_timings=quench_timings)
-
-        # Physical constants  ---
-
-        self.GRAVITY_ACCELERATION = codata.value("standard acceleration of gravity")
-
-        self.K_BOLTZMANN = 1
-        if not reduced_units:
-            self.K_BOLTZMANN = codata.value("Boltzmann constant")
-
-        self._settings.update(reduced_units=reduced_units)
 
         # Simulation-ID, and stuff  ---
 

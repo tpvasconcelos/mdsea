@@ -48,6 +48,8 @@ def setup_logging(
     handler.setLevel(level=level)
     looger_root.addHandler(handler)
 
+    looger_root.debug("logging setup successful!")
+
 
 def nsphere_volume(n, r):
     """ Return the volume of an n-sphere with radius r. """

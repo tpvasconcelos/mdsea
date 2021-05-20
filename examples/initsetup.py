@@ -1,7 +1,10 @@
 import mdsea as md
+from mdsea.helpers import setup_logging
+
+setup_logging(level="DEBUG")
 
 # Calculate the 'number of steps'  ---
-SECONDS = 1
+SECONDS = 2
 FRAME_STEP = 5
 FRAMES_PER_SECOND = 24
 STEPS = int(SECONDS * FRAMES_PER_SECOND * FRAME_STEP)
@@ -17,7 +20,7 @@ sm = md.SysManager.new(
     simid="_mdsea_docs_example",
     # Mandatory fields
     ndim=NDIM,
-    num_particles=2 ** NDIM,
+    num_particles=3 ** NDIM,
     vol_fraction=0.1,
     radius_particle=p_radius,
     # Optional fields
@@ -26,20 +29,21 @@ sm = md.SysManager.new(
     # mass=1,
     # gravity=True,
     # delta_t=None,
-    log_level=10,  # DEBUG LEVEL
     steps=STEPS,
-    pot=pot,
     # isothermal=True,
     # quench_temps=[],
     # quench_steps=[],
     # quench_timings=[],
-    r_cutoff=2.5 * pot.potminimum(),
     # restitution_coeff=0.4,
     # reduced_units=False
 )
 
 # Instantiate simulation  ---
-sim = md.ContinuousPotentialSolver(sm)
+sim = md.ContinuousPotentialSolver(
+    sm=sm,
+    pot=pot,
+    # r_cutoff=2.5 * pot.potminimum()
+)
 
 # Run the simulation  ---
 sim.run_simulation()

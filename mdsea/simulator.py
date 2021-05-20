@@ -1,9 +1,11 @@
 import logging
+from dataclasses import dataclass, field
 from itertools import chain, combinations
 from typing import Optional
 
 import numpy as np
-from mdsea import quicker
+from mdsea import Potential, quicker
+from mdsea.config import Config
 from mdsea.constants import DTYPE
 from mdsea.core import SysManager
 from mdsea.gen import PosGen, VelGen
@@ -13,6 +15,7 @@ from numpy.core.umath_tests import inner1d
 log = logging.getLogger(__name__)
 
 
+@dataclass
 class _BaseSimulator:
     """
     _BaseSimulator object
@@ -22,9 +25,29 @@ class _BaseSimulator:
 
     """
 
-    def __init__(self, sm: SysManager) -> None:
+    sm: SysManager = field()
 
-        self.sm = sm
+    # The integration time interval ("delta-t")
+    dt: Optional[float] = field(default=None)
+
+    # The pairwise potential
+    pot: Potential = field(default=Potential.ideal())
+
+    # Coefficient of restitution
+    # "Damping factor"
+    # ref: https://en.wikipedia.org/wiki/Coefficient_of_restitution
+    restitution_coeff: float = field(default=1.0)
+
+    # Force constant temperature throughout all simulation steps
+    isothermal: bool = field(default=False)
+
+    # Whether to apply a gravitational field
+    gravity: bool = field(default=False)
+
+    # TODO: implement cutoff radius
+    r_cutoff: Optional[float] = field(default=None)
+
+    def __post_init__(self) -> None:
 
         # Generate/set initial positions
         cgen = PosGen(ndim=self.sm.NDIM, boxlen=self.sm.LEN_BOX, nparticles=self.sm.NUM_PARTICLES)
@@ -32,7 +55,7 @@ class _BaseSimulator:
 
         # Generate/set initial velocities
         vgen = VelGen(ndim=self.sm.NDIM, nparticles=self.sm.NUM_PARTICLES)
-        self.v_vec = vgen.mb(sm.MASS, sm.TEMP, sm.K_BOLTZMANN)
+        self.v_vec = vgen.mb(self.sm.MASS, self.sm.TEMP, Config.k_boltzmann)
 
         # Shortcut for a zeroes array with
         # shape = (NDIM, NUM_PARTICLES)
@@ -59,21 +82,16 @@ class _BaseSimulator:
         self.step = 0
 
         # Set integration time interval ("delta-t")
-        self.dt = self.sm.DELTA_T
         if self.dt is None:
-            speeds = quicker.norm(self.v_vec, axis=0)
-            self.mean_speed = float(np.mean(speeds))
-            self.dt = get_dt(self.sm.RADIUS_PARTICLE, self.mean_speed)
+            self.dt = get_dt(radius=self.sm.RADIUS_PARTICLE, mean_speed=float(quicker.norm(self.v_vec, axis=0).mean()))
 
         # Boundary conditions stuff
         self.apply_bc = self.apply_pbc if self.sm.PBC else self.apply_hbc
 
         # Flipped identity matrix
         self._FLIPID = quicker.flipid(self.sm.NDIM)
-        # "Damping factor"
-        self._e = self.sm.RESTITUTION_COEFF + (1 - self.sm.RESTITUTION_COEFF)
         # Apply rest coefficient ??
-        self.apply_restcoeff = bool(self.sm.RESTITUTION_COEFF < 1)
+        self.apply_restcoeff = bool(self.restitution_coeff < 1)
 
         self.pbarr = ProgressBar("Simulator", self.sm.STEPS, __name__)
 
@@ -152,12 +170,12 @@ class _BaseSimulator:
         # Particles that passed to the negative side of the boundary
         whr = np.where(self.r_vec - self.sm.RADIUS_PARTICLE < 0)
         self.r_vec[whr] = self.sm.RADIUS_PARTICLE
-        self.v_vec[whr] *= -self.sm.RESTITUTION_COEFF
+        self.v_vec[whr] *= -self.restitution_coeff
 
         # Particles that passed to the positive side of the boundary
         whr = np.where(self.r_vec + self.sm.RADIUS_PARTICLE > self.sm.LEN_BOX)
         self.r_vec[whr] = self.sm.LEN_BOX - self.sm.RADIUS_PARTICLE
-        self.v_vec[whr] *= -self.sm.RESTITUTION_COEFF
+        self.v_vec[whr] *= -self.restitution_coeff
 
     # ==================================================================
     # ---  Special Events
@@ -165,7 +183,7 @@ class _BaseSimulator:
 
     def apply_special(self) -> None:
         """ Handle special events. """
-        if self.sm.ISOTHERMAL:
+        if self.isothermal:
             self._quench(self.temp_init)
         if self.step in self.sm.QUENCH_STEP:
             self._quench(self.sm.QUENCH_T.pop(0))
@@ -182,8 +200,8 @@ class _BaseSimulator:
     def apply_field(self):
         """ Apply an external field. """
         # TODO: add the option for the user to pass a field.
-        if self.sm.GRAVITY:
-            self.v_vec[-1] -= self.sm.GRAVITY_ACCELERATION * self.dt
+        if self.gravity:
+            self.v_vec[-1] -= Config.gravity_acceleration * self.dt
 
     @property
     def com(self):
@@ -199,7 +217,7 @@ class _BaseSimulator:
         root-mean-squared of the distances to the centre-of-mass."""
 
         # Calculate the separation distance
-        # vectors from the centre of mass
+        # vectors from the centre-of-mass
         dr_vecs = np.stack(self.r_vec, axis=-1) - self.com
 
         # If the vectors are bigger than half of the
@@ -216,7 +234,7 @@ class _BaseSimulator:
         if self.mean_ke is None:
             log.warning("Cannot update the temperature without first" " evaluating the mean kinetic energy.")
             return None
-        self.temp = (2 / 3) * self.mean_ke / self.sm.K_BOLTZMANN
+        self.temp = (2 / 3) * self.mean_ke / Config.k_boltzmann
         return self.temp
 
     def update_mean_ke(self) -> np.ndarray:
@@ -227,7 +245,7 @@ class _BaseSimulator:
 
     def update_mean_pe(self) -> np.ndarray:
         """ Update the mean potential energy. """
-        self.mean_pe = np.add.reduce(self.sm.POT.potential(self.dists)) / self.sm.NUM_PARTICLES
+        self.mean_pe = np.add.reduce(self.pot.potential(self.dists)) / self.sm.NUM_PARTICLES
         return self.mean_pe
 
     def update_energies(self) -> None:
@@ -279,7 +297,7 @@ class _BaseSimulator:
         certain cutoff radius."""
         self.update_dists(radius=radius)
 
-        acc = self.drunits * self.sm.POT.force(self.dists[:, np.newaxis]) / self.sm.MASS
+        acc = self.drunits * self.pot.force(self.dists[:, np.newaxis]) / self.sm.MASS
 
         self.acc = self.ndnp_zeroes.copy()
 
@@ -489,10 +507,13 @@ class _BaseSimulator:
 #             R_SQUAREWELL * SIGMA)
 
 
+@dataclass
 class ContinuousPotentialSolver(_BaseSimulator):
-    def __init__(self, sm: SysManager, algorithm: str = "verlet") -> None:
 
-        super().__init__(sm)
+    algorithm: str = field(default="verlet")
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
 
         algorithms_tbl = {
             "verlet": self.algorithm_verlet,
@@ -500,9 +521,9 @@ class ContinuousPotentialSolver(_BaseSimulator):
         }
 
         try:
-            self.apply_algorithm = algorithms_tbl[algorithm]
+            self.apply_algorithm = algorithms_tbl[self.algorithm]
         except KeyError:
-            msg = f"Algorithm '{algorithm}' not found " f"in {tuple(algorithms_tbl.keys())}"
+            msg = f"Algorithm '{self.algorithm}' not found " f"in {tuple(algorithms_tbl.keys())}"
             raise KeyError(msg)
 
     def algorithm_simple(self):
@@ -530,7 +551,7 @@ class ContinuousPotentialSolver(_BaseSimulator):
         # for (i, j), dist, dr_unit in zip(self.pairs, self.dists, self.drunits):
         #     new_collpairs.append((i, j))
         #     if (i, j) not in self.colliding_pairs:
-        #         v_factor = self._e * np.dot(self._FLIPID, dr_unit)
+        #         v_factor = self.restitution_coeff * np.dot(self._FLIPID, dr_unit)
         #         self.v_vec[:, i] *= v_factor
         #         self.v_vec[:, j] *= v_factor
         # self.colliding_pairs = new_collpairs

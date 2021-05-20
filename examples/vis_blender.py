@@ -1,5 +1,8 @@
 import mdsea as md
+from mdsea.helpers import setup_logging
 from mdsea.vis.blender import BlenderAnimation
+
+setup_logging(level="DEBUG")
 
 FRAME_STEP = 5
 

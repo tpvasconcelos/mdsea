@@ -1,6 +1,10 @@
 import cProfile
 import pstats
 
+from mdsea.helpers import setup_logging
+
+setup_logging(level="DEBUG")
+
 
 def main():
     from examples import vis_blender
