@@ -35,7 +35,7 @@ init: venv-init install jupyter-init ## initialise development environment
 .PHONY: venv-init
 venv-init: clean-venv ## create a virtual environment
 	python3.7 -m pip install --upgrade pip virtualenv
-	virtualenv -p python3.7 .venv
+	python3.7 -m virtualenv -p python3.7 .venv
 
 
 .PHONY: install
