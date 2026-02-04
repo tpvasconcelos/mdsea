@@ -15,3 +15,4 @@ requests>=2.32.4 # not directly required, pinned by Snyk to avoid a vulnerabilit
 urllib3>=2.5.0 # not directly required, pinned by Snyk to avoid a vulnerability
 jupyterlab>=4.4.8 # not directly required, pinned by Snyk to avoid a vulnerability
 fonttools>=4.61.0 # not directly required, pinned by Snyk to avoid a vulnerability
+nbconvert>=7.17.0 # not directly required, pinned by Snyk to avoid a vulnerability
